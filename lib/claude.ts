@@ -2,8 +2,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { ClaudeResponse } from './types'
 
 function getAnthropic() {
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not set')
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  if (!process.env.AI_API_KEY) throw new Error('AI_API_KEY is not set')
+  return new Anthropic({ apiKey: process.env.AI_API_KEY })
 }
 
 const SYSTEM_PROMPT = `You are a web code assistant helping manage updates to client websites.
@@ -46,7 +46,7 @@ export async function parseRequest(
   fileStructure: string[]
 ): Promise<ClaudeResponse> {
   const message = await getAnthropic().messages.create({
-    model: 'claude-opus-4-6',
+    model: 'claude-3-5-haiku-20241022',
     max_tokens: 2048,
     system: SYSTEM_PROMPT,
     messages: [
