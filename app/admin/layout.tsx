@@ -2,12 +2,24 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 const NAV = [
   {
+    label: 'Overview',
+    href: '/admin',
+    exactMatch: true,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+    ),
+  },
+  {
     label: 'Approvals',
     href: '/admin/approvals',
-    badge: 3,
+    exactMatch: false,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
@@ -17,17 +29,18 @@ const NAV = [
   {
     label: 'Clients',
     href: '/admin/clients',
-    badge: null,
+    exactMatch: false,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
       </svg>
     ),
   },
   {
     label: 'Billing',
     href: '/admin/billing',
-    badge: null,
+    exactMatch: false,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
@@ -38,6 +51,24 @@ const NAV = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const [pendingCount, setPendingCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    async function fetchPending() {
+      try {
+        const res = await fetch('/api/admin/stats')
+        if (!res.ok) return
+        const data = await res.json()
+        setPendingCount(data.pendingCount ?? 0)
+      } catch {
+        // silently ignore
+      }
+    }
+    fetchPending()
+    // Refresh every 30s so the badge stays current
+    const interval = setInterval(fetchPending, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-white flex">
@@ -63,7 +94,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="flex-1 px-3 space-y-0.5">
           <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest px-3 mb-2">Menu</p>
           {NAV.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href)
+            const active = item.exactMatch
+              ? pathname === item.href
+              : pathname.startsWith(item.href)
+            const showBadge = item.label === 'Approvals' && pendingCount !== null && pendingCount > 0
+
             return (
               <Link
                 key={item.href}
@@ -78,9 +113,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <span className={active ? 'text-[#3B82F6]' : 'text-slate-500'}>{item.icon}</span>
                   {item.label}
                 </span>
-                {item.badge !== null && (
+                {showBadge && (
                   <span className="bg-[#3B82F6] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                    {item.badge}
+                    {pendingCount}
                   </span>
                 )}
               </Link>

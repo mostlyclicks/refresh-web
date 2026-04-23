@@ -21,7 +21,7 @@ async function listGitHubFiles(repoPath: string): Promise<string[]> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { message_text, clientId, websiteId } = await req.json()
+    const { message_text, clientId, websiteId, attachments = [] } = await req.json()
 
     if (!message_text || !clientId || !websiteId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     // 1. Save request to DB
     const { data: request, error: reqError } = await supabaseAdmin
       .from('requests')
-      .insert({ client_id: clientId, website_id: websiteId, message_text, status: 'pending' })
+      .insert({ client_id: clientId, website_id: websiteId, message_text, status: 'pending', attachments })
       .select()
       .single()
 
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
           confidence: 0.99,
           notes: 'This is a mock response for testing. Set MOCK_CLAUDE=false to use real Claude.',
         }
-      : await parseRequest(message_text, currentCode, fileList)
+      : await parseRequest(message_text, currentCode, fileList, attachments)
 
     // 5. Save suggestion to DB
     const { data: savedSuggestion, error: sugError } = await supabaseAdmin

@@ -82,11 +82,57 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
           <button onClick={() => setExpanded(!expanded)} className="text-slate-500 hover:text-slate-300 text-xs transition-colors cursor-pointer">
             {expanded ? 'Collapse' : 'Expand'}
           </button>
+          <button
+            onClick={() => handle('dismiss')}
+            disabled={!!loading}
+            title="Dismiss"
+            className="text-slate-600 hover:text-red-400 transition-colors cursor-pointer disabled:opacity-40 ml-1"
+          >
+            {loading === 'dismiss' ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                <path d="M21 12a9 9 0 11-6.219-8.56"/>
+              </svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            )}
+          </button>
         </div>
       </div>
 
       {expanded && (
         <div className="px-6 pb-6 space-y-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* Attachments */}
+          {item.attachments?.length > 0 && (
+            <div className="pt-4">
+              <p className="text-xs text-slate-500 font-medium mb-2">Client attachments</p>
+              <div className="flex flex-wrap gap-2">
+                {item.attachments.map((att: any, i: number) => (
+                  att.type?.startsWith('image/') ? (
+                    <a key={i} href={att.url} target="_blank" rel="noopener noreferrer" className="group relative">
+                      <img src={att.url} alt={att.name} className="h-20 w-20 rounded-lg object-cover border border-white/10 group-hover:opacity-80 transition-opacity" />
+                    </a>
+                  ) : (
+                    <a
+                      key={i}
+                      href={att.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-300 hover:text-white transition-colors"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400 shrink-0">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      {att.name}
+                    </a>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+
           {suggestion ? (
             <>
               <div className="pt-4 flex items-center gap-4 flex-wrap">
@@ -172,10 +218,13 @@ export default function ApprovalsClient({ initialRequests }: { initialRequests: 
   const [requests, setRequests] = useState(initialRequests)
 
   const handleAction = async (requestId: string, suggestionId: string, action: string, notes: string) => {
+    // 'dismiss' maps to 'reject' on the API — just a UX distinction
+    const apiAction = action === 'dismiss' ? 'reject' : action
+
     const res = await fetch('/api/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requestId, suggestionId, action, notes }),
+      body: JSON.stringify({ requestId, suggestionId, action: apiAction, notes }),
     })
 
     if (res.ok) {

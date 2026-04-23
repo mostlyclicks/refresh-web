@@ -25,6 +25,13 @@ export interface Website {
   created_at: string
 }
 
+export interface Attachment {
+  url: string
+  name: string
+  type: string
+  size: number
+}
+
 export interface Request {
   id: string
   client_id: string
@@ -32,6 +39,7 @@ export interface Request {
   message_text: string
   created_at: string
   status: RequestStatus
+  attachments: Attachment[]
 }
 
 export interface ClaudeResponse {

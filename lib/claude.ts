@@ -43,17 +43,22 @@ Constraints:
 export async function parseRequest(
   requestText: string,
   currentCode: string,
-  fileStructure: string[]
+  fileStructure: string[],
+  attachments: { url: string; name: string; type: string }[] = []
 ): Promise<ClaudeResponse> {
+  const attachmentSection = attachments.length > 0
+    ? `\nAttached files (use these exact URLs in new_code when referencing uploaded media):\n${attachments.map(a => `- ${a.name}: ${a.url}`).join('\n')}\n`
+    : ''
+
   const message = await getAnthropic().messages.create({
-    model: 'claude-3-5-haiku-20241022',
+    model: 'claude-haiku-4-5',
     max_tokens: 2048,
     system: SYSTEM_PROMPT,
     messages: [
       {
         role: 'user',
         content: `Client request: ${requestText}
-
+${attachmentSection}
 File structure:
 ${fileStructure.join('\n')}
 
@@ -70,5 +75,8 @@ Analyze this request and return the JSON response.`,
   const content = message.content[0]
   if (content.type !== 'text') throw new Error('Unexpected response type from Claude')
 
-  return JSON.parse(content.text) as ClaudeResponse
+  // Strip markdown code fences if the model wraps the JSON
+  const raw = content.text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim()
+
+  return JSON.parse(raw) as ClaudeResponse
 }
