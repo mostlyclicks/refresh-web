@@ -42,13 +42,17 @@ export interface Request {
   attachments: Attachment[]
 }
 
-export interface ClaudeResponse {
-  understood: boolean
-  request_summary: string
+export interface CodeChange {
   target_file: string
   target_section: string
   old_code: string
   new_code: string
+}
+
+export interface ClaudeResponse {
+  understood: boolean
+  request_summary: string
+  changes: CodeChange[]
   risk_level: RiskLevel
   risk_description: string
   confidence: number

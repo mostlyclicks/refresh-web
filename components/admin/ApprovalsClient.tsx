@@ -156,7 +156,35 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
                 </div>
               )}
 
-              <DiffView oldCode={suggestion.old_code ?? ''} newCode={suggestion.new_code ?? ''} />
+              {/* Render a diff per change */}
+              {(() => {
+                const changes: any[] = claudeResponse?.changes?.length
+                  ? claudeResponse.changes
+                  : [{ target_file: suggestion.target_file, old_code: suggestion.old_code, new_code: suggestion.new_code }]
+
+                return (
+                  <div className="space-y-4">
+                    {changes.map((change: any, i: number) => (
+                      <div key={i}>
+                        {changes.length > 1 && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-widest">
+                              Change {i + 1} of {changes.length}
+                            </span>
+                            <span className="font-mono text-[11px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">
+                              {change.target_file}
+                            </span>
+                            {change.target_section && (
+                              <span className="text-[11px] text-slate-600">— {change.target_section}</span>
+                            )}
+                          </div>
+                        )}
+                        <DiffView oldCode={change.old_code ?? ''} newCode={change.new_code ?? ''} />
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
             </>
           ) : (
             <div className="pt-4 text-sm text-slate-500 italic">Claude is still processing this request…</div>

@@ -9,31 +9,37 @@ function getAnthropic() {
 const SYSTEM_PROMPT = `You are a web code assistant helping manage updates to client websites.
 
 Your job:
-1. Understand the client's natural language request
-2. Map it to the specific HTML/CSS/JS file and location
-3. Generate a safe, minimal code change
+1. Understand the client's natural language request (which may include multiple changes)
+2. Map each change to the specific HTML/CSS/JS file and location
+3. Generate safe, minimal code changes
 4. Flag any risks
 
 Input:
 - Client request (text)
-- Website context (file structure, relevant code snippets)
-- Current code (HTML/CSS/JS)
+- All website files (HTML, CSS, JS) — each labeled with its filename
+- Attached files (use these exact URLs when the client is providing replacement media)
 
 Output (JSON only, no markdown):
 {
   "understood": true/false,
-  "request_summary": "one-liner of what changed",
-  "target_file": "index.html" or "styles.css" or "script.js",
-  "target_section": "hero section" or "footer" or "specific line",
-  "old_code": "the exact code being replaced",
-  "new_code": "the new code",
+  "request_summary": "one-liner summarising all changes made",
+  "changes": [
+    {
+      "target_file": "index.html",
+      "target_section": "hero section",
+      "old_code": "the exact code being replaced",
+      "new_code": "the replacement code"
+    }
+  ],
   "risk_level": "low" | "medium" | "high",
-  "risk_description": "why this might break things",
+  "risk_description": "why any of these changes might break things",
   "confidence": 0.0-1.0,
   "notes": "anything Carlos should know"
 }
 
 Constraints:
+- Return one entry in "changes" per distinct code change needed
+- Each change must target a different location — never return two changes to the same old_code
 - Only modify HTML/CSS/JS in the deployed website
 - Never modify configuration files or build scripts
 - Always preserve structure (don't delete parent divs)
@@ -42,30 +48,29 @@ Constraints:
 
 export async function parseRequest(
   requestText: string,
-  currentCode: string,
-  fileStructure: string[],
+  siteFiles: Record<string, string>,
   attachments: { url: string; name: string; type: string }[] = []
 ): Promise<ClaudeResponse> {
   const attachmentSection = attachments.length > 0
     ? `\nAttached files (use these exact URLs in new_code when referencing uploaded media):\n${attachments.map(a => `- ${a.name}: ${a.url}`).join('\n')}\n`
     : ''
 
+  // Format all site files for the prompt
+  const filesSection = Object.entries(siteFiles)
+    .map(([name, content]) => `=== ${name} ===\n\`\`\`\n${content}\n\`\`\``)
+    .join('\n\n')
+
   const message = await getAnthropic().messages.create({
     model: 'claude-haiku-4-5',
-    max_tokens: 2048,
+    max_tokens: 4096,
     system: SYSTEM_PROMPT,
     messages: [
       {
         role: 'user',
         content: `Client request: ${requestText}
 ${attachmentSection}
-File structure:
-${fileStructure.join('\n')}
-
-Current code:
-\`\`\`
-${currentCode}
-\`\`\`
+Website files:
+${filesSection}
 
 Analyze this request and return the JSON response.`,
       },
@@ -77,6 +82,20 @@ Analyze this request and return the JSON response.`,
 
   // Strip markdown code fences if the model wraps the JSON
   const raw = content.text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim()
+  const parsed = JSON.parse(raw) as ClaudeResponse
 
-  return JSON.parse(raw) as ClaudeResponse
+  // Normalise: if old format (single change at top level), migrate to changes array
+  if (!parsed.changes && (parsed as any).old_code) {
+    const legacy = parsed as any
+    parsed.changes = [{
+      target_file:    legacy.target_file,
+      target_section: legacy.target_section,
+      old_code:       legacy.old_code,
+      new_code:       legacy.new_code,
+    }]
+  }
+
+  if (!Array.isArray(parsed.changes)) parsed.changes = []
+
+  return parsed
 }
