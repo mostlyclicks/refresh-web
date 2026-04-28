@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/db'
-import { RequestStatus } from '@/lib/types'
+import { RequestStatus, ClientTier } from '@/lib/types'
+import ClientCards from '@/components/admin/ClientCards'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,6 +33,7 @@ export default async function AdminOverviewPage() {
     { count: deployedThisMonth },
     { count: totalRequests },
     { data: recentRequests },
+    { data: rawClients },
   ] = await Promise.all([
     supabaseAdmin.from('clients').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -46,7 +48,38 @@ export default async function AdminOverviewPage() {
       .select('*, clients(name), websites(name, deployed_url)')
       .order('created_at', { ascending: false })
       .limit(8),
+    supabaseAdmin
+      .from('clients')
+      .select('id, name, tier, created_at, websites(name, deployed_url), requests(id, status, created_at)')
+      .order('name'),
   ])
+
+  const tierConfig: Record<ClientTier, { label: string; className: string }> = {
+    basic:        { label: 'Basic',        className: 'text-slate-400 bg-white/5' },
+    professional: { label: 'Professional', className: 'text-blue-400 bg-blue-500/10' },
+    custom:       { label: 'Custom',       className: 'text-purple-400 bg-purple-500/10' },
+  }
+
+  const clientCards = (rawClients ?? []).map((client: any) => {
+    const requests: any[] = client.requests ?? []
+    const pending = requests.filter((r) => r.status === 'pending').length
+    const last = requests
+      .map((r) => r.created_at as string)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null
+    const website = (client.websites as any[])?.[0] ?? null
+    const vercelUrl = (website?.deployed_url as string | null) ?? null
+    return {
+      id: client.id as string,
+      name: client.name as string,
+      tier: client.tier as ClientTier,
+      createdAt: client.created_at as string,
+      websiteDisplayName: vercelUrl?.replace('https://', '') ?? (website?.name as string | null),
+      vercelUrl,
+      pendingCount: pending,
+      totalRequests: requests.length,
+      lastUpdate: last,
+    }
+  })
 
   const stats = [
     {
@@ -135,6 +168,9 @@ export default async function AdminOverviewPage() {
           </Link>
         ))}
       </div>
+
+      {/* Client cards */}
+      <ClientCards cards={clientCards} tierConfig={tierConfig} />
 
       {/* Recent requests */}
       <div>
