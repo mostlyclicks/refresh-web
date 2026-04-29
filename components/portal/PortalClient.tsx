@@ -168,11 +168,16 @@ export default function PortalClient({ client, website, initialRequests }: Props
     }
   }
 
+  const lastDeployed = requests.find(r => r.status === 'deployed')?.created_at ?? null
+  const screenshotUrl = website.deployed_url
+    ? `https://s0.wp.com/mshots/v1/${encodeURIComponent(website.deployed_url)}?w=800&h=600`
+    : null
+
   return (
     <div className="min-h-screen bg-[#0F172A] text-white">
       {/* Header */}
       <header className="border-b border-white/10 px-6 py-5">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <span className="text-lg font-bold">
             Refresh<span className="text-[#3B82F6]">Web</span>
           </span>
@@ -183,7 +188,10 @@ export default function PortalClient({ client, website, initialRequests }: Props
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 py-12">
+      <main className="max-w-6xl mx-auto px-6 py-10 lg:grid lg:grid-cols-[1fr_340px] lg:gap-10 lg:items-start">
+
+        {/* ── Left: form + history ── */}
+        <div>
         {/* Request form */}
         <div className="mb-12">
           <h1 className="text-2xl font-bold mb-2">Request an update</h1>
@@ -322,6 +330,65 @@ export default function PortalClient({ client, website, initialRequests }: Props
             </div>
           )}
         </div>
+        </div>{/* end left column */}
+
+        {/* ── Right: site preview ── */}
+        {website.deployed_url && (
+          <div className="mt-10 lg:mt-0 lg:sticky lg:top-8">
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              {/* Screenshot */}
+              <div className="relative w-full aspect-[4/3] bg-slate-900 overflow-hidden">
+                {screenshotUrl && (
+                  <img
+                    src={screenshotUrl}
+                    alt={`${client.name} website preview`}
+                    className="w-full h-full object-cover object-top"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
+                )}
+                {/* Overlay gradient at bottom */}
+                <div className="absolute inset-x-0 bottom-0 h-12 pointer-events-none"
+                  style={{ background: 'linear-gradient(to bottom, transparent, rgba(15,23,42,0.8))' }} />
+              </div>
+
+              {/* Site info */}
+              <div className="px-5 py-4 space-y-4">
+                <div>
+                  <p className="font-semibold text-white text-sm">{client.name}</p>
+                  <p className="text-xs text-slate-500 truncate mt-0.5">
+                    {website.deployed_url.replace('https://', '')}
+                  </p>
+                </div>
+
+                <a
+                  href={website.deployed_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-medium text-white transition-colors"
+                  style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.25)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.15)')}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                  Open live site
+                </a>
+
+                {lastDeployed && (
+                  <p className="text-[11px] text-slate-600 text-center">
+                    Last updated {formatDate(lastDeployed)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   )

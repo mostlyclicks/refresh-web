@@ -7,36 +7,40 @@ function getStripe() {
   })
 }
 
-// Lazy singleton
 let _stripe: Stripe | null = null
 export function stripe() {
   if (!_stripe) _stripe = getStripe()
   return _stripe
 }
 
-export async function createCustomer(name: string, email: string): Promise<string> {
+export async function findOrCreateCustomer(name: string, email: string): Promise<string> {
+  // Check if customer already exists in Stripe
+  const existing = await stripe().customers.list({ email, limit: 1 })
+  if (existing.data.length > 0) return existing.data[0].id
   const customer = await stripe().customers.create({ name, email })
   return customer.id
 }
 
-export async function createSubscription(
+export async function createCheckoutSession(
   customerId: string,
-  priceId: string
-): Promise<Stripe.Subscription> {
-  return stripe().subscriptions.create({
+  clientId: string,
+  priceId: string,
+  baseUrl: string
+): Promise<string> {
+  const session = await stripe().checkout.sessions.create({
     customer: customerId,
-    items: [{ price: priceId }],
-    payment_behavior: 'default_incomplete',
-    expand: ['latest_invoice.payment_intent'],
+    mode: 'subscription',
+    line_items: [{ price: priceId, quantity: 1 }],
+    client_reference_id: clientId,
+    success_url: `${baseUrl}/admin/billing?success=1`,
+    cancel_url:  `${baseUrl}/admin/billing?cancelled=1`,
+    subscription_data: {
+      metadata: { clientId },
+    },
   })
+  return session.url!
 }
 
 export async function cancelSubscription(subscriptionId: string): Promise<void> {
   await stripe().subscriptions.cancel(subscriptionId)
-}
-
-// Price IDs — set these in Stripe dashboard and add to .env
-export const PRICE_IDS = {
-  basic: process.env.STRIPE_PRICE_BASIC!,       // $99/mo
-  professional: process.env.STRIPE_PRICE_PRO!,  // $199/mo
 }

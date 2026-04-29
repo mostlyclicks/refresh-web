@@ -125,14 +125,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Footer */}
         <div className="px-6 py-5" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-[#3B82F6]/20 flex items-center justify-center text-[#3B82F6] text-xs font-bold">
-              C
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-[#3B82F6]/20 flex items-center justify-center text-[#3B82F6] text-xs font-bold">
+                C
+              </div>
+              <div>
+                <p className="text-sm font-medium leading-none">Carlos</p>
+                <p className="text-xs text-slate-500 mt-0.5">Owner</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium leading-none">Carlos</p>
-              <p className="text-xs text-slate-500 mt-0.5">Owner</p>
-            </div>
+            <button
+              onClick={async () => {
+                await fetch('/api/admin/logout', { method: 'POST' })
+                window.location.href = '/admin/login'
+              }}
+              title="Sign out"
+              className="text-slate-600 hover:text-red-400 transition-colors cursor-pointer"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </button>
           </div>
         </div>
       </aside>

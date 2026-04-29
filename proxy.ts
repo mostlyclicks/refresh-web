@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+import { createHash } from 'crypto'
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
+  // Exclude the login page itself from protection
+  if (pathname.startsWith('/admin/login')) return NextResponse.next()
+
   if (pathname.startsWith('/admin')) {
-    const authHeader = req.headers.get('authorization')
+    const adminPassword = process.env.ADMIN_PASSWORD
 
-    if (!ADMIN_PASSWORD) return NextResponse.next() // dev mode: no password set
+    // No password set — allow through in dev
+    if (!adminPassword) return NextResponse.next()
 
-    if (!authHeader || authHeader !== `Bearer ${ADMIN_PASSWORD}`) {
-      // Check for cookie-based session instead
-      const session = req.cookies.get('admin_session')
-      if (!session || session.value !== ADMIN_PASSWORD) {
-        return NextResponse.redirect(new URL('/admin/login', req.url))
-      }
+    const expectedToken = createHash('sha256').update(adminPassword).digest('hex')
+    const session = req.cookies.get('admin_session')
+
+    if (!session || session.value !== expectedToken) {
+      return NextResponse.redirect(new URL('/admin/login', req.url))
     }
   }
 
