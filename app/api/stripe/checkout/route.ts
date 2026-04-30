@@ -10,20 +10,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing clientId or email' }, { status: 400 })
     }
 
-    const priceId = process.env.STRIPE_PRICE_ID_MANAGE
-    if (!priceId) {
-      return NextResponse.json({ error: 'STRIPE_PRICE_ID_MANAGE is not set' }, { status: 500 })
-    }
-
     // Fetch client from Supabase
     const { data: client, error } = await supabaseAdmin
       .from('clients')
-      .select('id, name, email, stripe_customer_id')
+      .select('id, name, email, tier, stripe_customer_id')
       .eq('id', clientId)
       .single()
 
     if (error || !client) {
       return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+    }
+
+    // Pick price based on tier
+    const priceId = client.tier === 'professional'
+      ? process.env.STRIPE_PRICE_ID_PRO
+      : process.env.STRIPE_PRICE_ID_BASIC
+
+    if (!priceId) {
+      return NextResponse.json(
+        { error: `Price ID not set for tier: ${client.tier}. Add STRIPE_PRICE_ID_BASIC and STRIPE_PRICE_ID_PRO to env vars.` },
+        { status: 500 }
+      )
     }
 
     // Find or create Stripe customer
