@@ -1,9 +1,21 @@
+'use client'
+
+import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollReveal } from '@/components/ScrollReveal'
 import { MobileNav } from '@/components/MobileNav'
+import { ContactModal } from '@/components/ContactModal'
 
 export default function HomePage() {
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<string>('')
+
+  function openModal(plan = '') {
+    setSelectedPlan(plan)
+    setModalOpen(true)
+  }
+
   return (
     <div className="min-h-screen bg-[#0F172A] text-white">
       {/* Nav */}
@@ -37,10 +49,16 @@ export default function HomePage() {
           </ScrollReveal>
           <ScrollReveal delay={300}>
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <Button size="lg" className="bg-[#3B82F6] hover:bg-blue-500 text-white px-8">
+              <Button
+                size="lg"
+                className="bg-[#3B82F6] hover:bg-blue-500 text-white px-8"
+                onClick={() => openModal()}
+              >
                 Get Started
               </Button>
-              <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/5 px-8">
+              <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/5 px-8"
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+              >
                 See how it works
               </Button>
             </div>
@@ -112,14 +130,16 @@ export default function HomePage() {
             {[
               {
                 name: 'Basic',
-                price: '$99',
-                features: ['Up to 5 update requests/month', 'Changes reviewed & approved', 'Auto-deploy on approval', 'Change history log'],
+                plan: 'basic',
+                price: '$49',
+                features: ['Up to 20 update requests/month', 'Changes reviewed & approved', 'Auto-deploy on approval', 'Change history log'],
                 highlight: false,
                 delay: 0,
               },
               {
                 name: 'Professional',
-                price: '$199',
+                plan: 'professional',
+                price: '$99',
                 features: ['Unlimited update requests', 'Priority review turnaround', 'Auto-deploy on approval', 'Change history log', 'Rollback on request'],
                 highlight: true,
                 delay: 150,
@@ -152,6 +172,7 @@ export default function HomePage() {
                     ))}
                   </ul>
                   <Button
+                    onClick={() => openModal(tier.plan)}
                     className={`w-full ${
                       tier.highlight
                         ? 'bg-[#3B82F6] hover:bg-blue-500 text-white'
@@ -176,6 +197,12 @@ export default function HomePage() {
           <p className="text-slate-500 text-sm">© 2025 RefreshWeb. All rights reserved.</p>
         </div>
       </footer>
+
+      <ContactModal
+        open={modalOpen}
+        initialPlan={selectedPlan}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   )
 }
