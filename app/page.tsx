@@ -194,7 +194,7 @@ export default function HomePage() {
           <span className="text-sm font-bold">
             Refresh<span className="text-[#3B82F6]">Web</span>
           </span>
-          <p className="text-slate-500 text-sm">© 2025 RefreshWeb. All rights reserved.</p>
+          <p className="text-slate-500 text-sm">© {new Date().getFullYear()} RefreshWeb. All rights reserved.</p>
         </div>
       </footer>
 
