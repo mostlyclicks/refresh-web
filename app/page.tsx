@@ -194,7 +194,11 @@ export default function HomePage() {
           <span className="text-sm font-bold">
             Refresh<span className="text-[#3B82F6]">Web</span>
           </span>
-          <p className="text-slate-500 text-sm">© {new Date().getFullYear()} RefreshWeb. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <a href="/privacy" className="text-slate-500 text-sm hover:text-white transition-colors">Privacy</a>
+            <a href="/terms" className="text-slate-500 text-sm hover:text-white transition-colors">Terms</a>
+            <p className="text-slate-500 text-sm">© {new Date().getFullYear()} RefreshWeb. All rights reserved.</p>
+          </div>
         </div>
       </footer>
 
