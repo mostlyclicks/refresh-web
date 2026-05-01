@@ -146,7 +146,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">12. Governing Law</h2>
             <p>
-              These Terms are governed by the laws of the State of California. Any disputes shall be resolved in the courts of California.
+              These Terms are governed by the laws of the State of Wisconsin. Any disputes shall be resolved in the courts of Wisconsin.
             </p>
           </section>
 
