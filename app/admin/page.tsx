@@ -135,9 +135,9 @@ export default async function AdminOverviewPage() {
   ]
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <h1 className="text-2xl font-bold mb-1">Overview</h1>
         <p className="text-slate-400 text-sm">
           {now.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
@@ -145,7 +145,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8 md:mb-10">
         {stats.map((stat) => (
           <Link
             key={stat.label}
@@ -190,44 +190,63 @@ export default async function AdminOverviewPage() {
             <p className="text-slate-600 text-xs mt-1">They&apos;ll show up here once clients start submitting.</p>
           </div>
         ) : (
-          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-            {/* Table header */}
-            <div
-              className="grid grid-cols-[2fr_1.5fr_3fr_1fr_1.2fr] px-5 py-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500"
-              style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-            >
-              <span>Client</span>
-              <span>Website</span>
-              <span>Request</span>
-              <span>Status</span>
-              <span>Date</span>
-            </div>
-
-            <div className="divide-y divide-white/5">
+          <>
+            {/* Mobile card list */}
+            <div className="md:hidden space-y-2">
               {(recentRequests as any[]).map((req) => {
                 const status = statusConfig[req.status as RequestStatus]
                 return (
-                  <div
-                    key={req.id}
-                    className="grid grid-cols-[2fr_1.5fr_3fr_1fr_1.2fr] px-5 py-4 items-center hover:bg-white/[0.03] transition-colors"
-                  >
-                    <span className="font-medium text-white text-sm truncate pr-2">
-                      {req.clients?.name ?? '—'}
-                    </span>
-                    <span className="text-slate-400 text-sm truncate pr-2">
-                      {req.websites?.deployed_url?.replace('https://', '') ?? req.websites?.name ?? '—'}
-                    </span>
-                    <p className="text-slate-300 text-sm truncate pr-4">{req.message_text}</p>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${status.dot}`} />
-                      <span className="text-sm text-slate-300">{status.label}</span>
+                  <div key={req.id} className="rounded-xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <span className="font-medium text-white text-sm truncate">{req.clients?.name ?? '—'}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+                        <span className="text-xs text-slate-400">{status.label}</span>
+                      </div>
                     </div>
-                    <span className="text-xs text-slate-500">{formatDate(req.created_at)}</span>
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{req.message_text}</p>
+                    <p className="text-[11px] text-slate-600 mt-1.5">{formatDate(req.created_at)}</p>
                   </div>
                 )
               })}
             </div>
-          </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div
+                className="grid grid-cols-[2fr_1.5fr_3fr_1fr_1.2fr] px-5 py-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500"
+                style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <span>Client</span>
+                <span>Website</span>
+                <span>Request</span>
+                <span>Status</span>
+                <span>Date</span>
+              </div>
+              <div className="divide-y divide-white/5">
+                {(recentRequests as any[]).map((req) => {
+                  const status = statusConfig[req.status as RequestStatus]
+                  return (
+                    <div
+                      key={req.id}
+                      className="grid grid-cols-[2fr_1.5fr_3fr_1fr_1.2fr] px-5 py-4 items-center hover:bg-white/[0.03] transition-colors"
+                    >
+                      <span className="font-medium text-white text-sm truncate pr-2">{req.clients?.name ?? '—'}</span>
+                      <span className="text-slate-400 text-sm truncate pr-2">
+                        {req.websites?.deployed_url?.replace('https://', '') ?? req.websites?.name ?? '—'}
+                      </span>
+                      <p className="text-slate-300 text-sm truncate pr-4">{req.message_text}</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${status.dot}`} />
+                        <span className="text-sm text-slate-300">{status.label}</span>
+                      </div>
+                      <span className="text-xs text-slate-500">{formatDate(req.created_at)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

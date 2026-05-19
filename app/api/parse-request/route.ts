@@ -1,60 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/db'
 import { parseRequest } from '@/lib/claude'
-import { Octokit } from '@octokit/rest'
-
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
-
-/** Normalise any GitHub URL format to "owner/repo" */
-function normaliseRepo(raw: string): string {
-  return raw
-    .trim()
-    .replace(/^https?:\/\/github\.com\//, '')
-    .replace(/\.git$/, '')
-    .replace(/\/$/, '')
-}
-
-async function fetchGitHubFile(repoPath: string, filePath: string): Promise<string> {
-  const [owner, repo] = repoPath.split('/')
-  try {
-    const { data } = await octokit.repos.getContent({ owner, repo, path: filePath })
-    if (Array.isArray(data) || data.type !== 'file') throw new Error('Expected a file')
-    return Buffer.from(data.content, 'base64').toString('utf8')
-  } catch (err: any) {
-    throw new Error(`GitHub: could not fetch "${filePath}" from ${owner}/${repo} — ${err.message}`)
-  }
-}
-
-async function listGitHubFiles(repoPath: string): Promise<string[]> {
-  const [owner, repo] = repoPath.split('/')
-  try {
-    const { data } = await octokit.repos.getContent({ owner, repo, path: '' })
-    if (!Array.isArray(data)) return []
-    return data.map((f) => f.name)
-  } catch (err: any) {
-    throw new Error(`GitHub: could not list files in ${owner}/${repo} — ${err.message}. Check that the repo exists and GITHUB_TOKEN has access.`)
-  }
-}
-
-/** Fetch all HTML and CSS files in the repo, returned as a map of filename → content */
-async function fetchAllSiteFiles(repoPath: string, fileList: string[]): Promise<Record<string, string>> {
-  const relevant = fileList.filter(f =>
-    f.endsWith('.html') || f.endsWith('.css') || f.endsWith('.js')
-  ).slice(0, 10) // cap at 10 files to stay within token limits
-
-  const entries = await Promise.all(
-    relevant.map(async (file) => {
-      try {
-        const content = await fetchGitHubFile(repoPath, file)
-        return [file, content] as [string, string]
-      } catch {
-        return null
-      }
-    })
-  )
-
-  return Object.fromEntries(entries.filter(Boolean) as [string, string][])
-}
+import { normaliseRepo, listGitHubFiles, fetchAllSiteFiles } from '@/lib/github'
 
 export async function POST(req: NextRequest) {
   try {
@@ -67,7 +14,7 @@ export async function POST(req: NextRequest) {
     // 1. Save request to DB
     const { data: request, error: reqError } = await supabaseAdmin
       .from('requests')
-      .insert({ client_id: clientId, website_id: websiteId, message_text, status: 'pending', attachments })
+      .insert({ client_id: clientId, website_id: websiteId, message_text, status: 'pending', attachments, source: 'chat' })
       .select()
       .single()
 

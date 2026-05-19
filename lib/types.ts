@@ -1,6 +1,7 @@
 export type ClientStatus = 'active' | 'paused' | 'archived'
 export type ClientTier = 'basic' | 'professional' | 'custom'
 export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'deployed'
+export type RequestSource = 'chat' | 'sms'
 export type RiskLevel = 'low' | 'medium' | 'high'
 export type BillingStatus = 'paid' | 'failed' | 'upcoming'
 
@@ -8,6 +9,7 @@ export interface Client {
   id: string
   name: string
   email: string
+  mobile_number: string | null
   website_url: string | null
   created_at: string
   status: ClientStatus
@@ -39,6 +41,7 @@ export interface Request {
   message_text: string
   created_at: string
   status: RequestStatus
+  source: RequestSource
   attachments: Attachment[]
 }
 

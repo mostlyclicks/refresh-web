@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/db'
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, tier, websiteName, githubRepo, deployedUrl } = await req.json()
+    const { name, email, mobileNumber, tier, websiteName, githubRepo, deployedUrl } = await req.json()
 
     if (!name || !email || !tier) {
       return NextResponse.json({ error: 'Name, email, and tier are required' }, { status: 400 })
@@ -13,10 +13,11 @@ export async function POST(req: NextRequest) {
     const { data: client, error: clientError } = await supabaseAdmin
       .from('clients')
       .insert({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
+        name:          name.trim(),
+        email:         email.trim().toLowerCase(),
+        mobile_number: mobileNumber?.trim() || null,
         tier,
-        status: 'active',
+        status:        'active',
       })
       .select()
       .single()

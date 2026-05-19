@@ -96,8 +96,8 @@ export default function BillingClient({ clients, billingRecords }: Props) {
   }
 
   return (
-    <div className="px-8 py-8">
-      <div className="mb-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
+      <div className="mb-6 md:mb-8">
         <h1 className="text-2xl font-bold mb-1">Billing</h1>
         <p className="text-slate-400 text-sm">Revenue overview and client subscriptions</p>
       </div>
@@ -109,12 +109,12 @@ export default function BillingClient({ clients, billingRecords }: Props) {
           style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', color: '#93c5fd' }}
         >
           <span>{flash}</span>
-          <button onClick={() => setFlash(null)} className="text-slate-500 hover:text-white ml-4">✕</button>
+          <button onClick={() => setFlash(null)} className="text-slate-500 hover:text-white ml-4 min-w-[44px] min-h-[44px] flex items-center justify-end">✕</button>
         </div>
       )}
 
-      {/* MRR Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
+      {/* MRR Cards — 1 col on mobile, 3 col on sm+ */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8 md:mb-10">
         {[
           {
             label: 'Monthly Recurring Revenue',
@@ -137,14 +137,14 @@ export default function BillingClient({ clients, billingRecords }: Props) {
         ].map((card) => (
           <div
             key={card.label}
-            className="p-6 rounded-2xl"
+            className="p-5 md:p-6 rounded-2xl"
             style={{
               background: card.accent ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.04)',
               border: card.accent ? '1px solid rgba(59,130,246,0.25)' : '1px solid rgba(255,255,255,0.08)',
             }}
           >
             <p className="text-slate-400 text-xs font-medium mb-3">{card.label}</p>
-            <p className={`text-4xl font-bold mb-1 ${card.accent ? 'text-[#3B82F6]' : 'text-white'}`}>
+            <p className={`text-3xl md:text-4xl font-bold mb-1 ${card.accent ? 'text-[#3B82F6]' : 'text-white'}`}>
               {card.value}
             </p>
             <p className="text-xs text-slate-500">{card.sub}</p>
@@ -153,9 +153,63 @@ export default function BillingClient({ clients, billingRecords }: Props) {
       </div>
 
       {/* Client Subscriptions */}
-      <div className="mb-10">
+      <div className="mb-8 md:mb-10">
         <h2 className="text-base font-semibold mb-4">Client Subscriptions</h2>
-        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+
+        {/* Mobile card list */}
+        <div className="md:hidden space-y-3">
+          {clients.length === 0 && (
+            <p className="text-slate-500 text-sm text-center py-6">No clients yet</p>
+          )}
+          {clients.map((client) => {
+            const isActive = !!client.stripe_subscription_id && client.status === 'active'
+            const isLoading = loadingId === client.id
+            return (
+              <div key={client.id} className="rounded-2xl p-4" style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-white text-[15px] truncate">{client.name}</p>
+                    <p className="text-xs text-slate-500 truncate mt-0.5">{client.email}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isActive ? (
+                      <><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span className="text-xs text-slate-300">Active</span></>
+                    ) : (
+                      <><span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span><span className="text-xs text-slate-500 capitalize">{client.status}</span></>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-slate-400 capitalize">{client.tier}</span>
+                    <span className="text-xs text-slate-600 mx-2">·</span>
+                    <span className="text-xs font-mono text-slate-400">${tierPrice(client.tier)}/mo</span>
+                  </div>
+                  {isActive ? (
+                    <button
+                      onClick={() => handleCancel(client)}
+                      disabled={isLoading}
+                      className="px-3 min-h-[44px] rounded-lg text-xs font-medium text-red-400 border border-red-400/30 hover:bg-red-400/10 transition-colors disabled:opacity-50"
+                    >
+                      {isLoading ? 'Cancelling…' : 'Cancel'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleSubscribe(client)}
+                      disabled={isLoading}
+                      className="px-3 min-h-[44px] rounded-lg text-xs font-medium text-white bg-[#3B82F6] hover:bg-blue-500 transition-colors disabled:opacity-50"
+                    >
+                      {isLoading ? 'Loading…' : 'Subscribe'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
           <div
             className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] px-5 py-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500"
             style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
@@ -228,7 +282,36 @@ export default function BillingClient({ clients, billingRecords }: Props) {
       {/* Payment History */}
       <div>
         <h2 className="text-base font-semibold mb-4">Payment History</h2>
-        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+
+        {/* Mobile card list */}
+        <div className="md:hidden space-y-3">
+          {billingRecords.length === 0 && (
+            <p className="text-slate-500 text-sm text-center py-6">No payment history yet</p>
+          )}
+          {billingRecords.map((record) => (
+            <div key={record.id} className="rounded-2xl p-4" style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <p className="font-medium text-white text-sm">{record.client_name}</p>
+                  <p className="font-mono text-[11px] text-slate-600 mt-0.5 truncate">{record.stripe_invoice_id}</p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`w-1.5 h-1.5 rounded-full ${record.status === 'paid' ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                  <span className={`text-xs capitalize ${record.status === 'paid' ? 'text-slate-300' : 'text-red-400'}`}>{record.status}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-slate-300 text-sm">${(record.amount_cents / 100).toFixed(2)}</span>
+                <span className="text-xs text-slate-500">
+                  {new Date(record.billing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
           <div
             className="grid grid-cols-[1fr_2fr_1fr_1.2fr_1fr] px-5 py-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500"
             style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}

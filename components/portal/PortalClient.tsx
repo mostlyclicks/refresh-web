@@ -1,16 +1,14 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { Client, Website, Request, RequestStatus, Attachment } from '@/lib/types'
 
-const statusConfig: Record<RequestStatus, { label: string; className: string }> = {
-  pending:  { label: 'Pending',  className: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  approved: { label: 'Approved', className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  deployed: { label: 'Live',     className: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  rejected: { label: 'Rejected', className: 'bg-red-500/10 text-red-400 border-red-500/20' },
+const statusConfig: Record<RequestStatus, { label: string; icon: string; className: string }> = {
+  pending:  { label: 'Under review',       icon: '🕐', className: 'text-yellow-400' },
+  approved: { label: 'Approved',           icon: '✓',  className: 'text-blue-400' },
+  deployed: { label: 'Live on your site',  icon: '✓',  className: 'text-emerald-400' },
+  rejected: { label: 'Needs more info',    icon: '↩',  className: 'text-slate-400' },
 }
 
 function formatDate(iso: string) {
@@ -49,7 +47,7 @@ function FileIcon({ type }: { type: string }) {
 
 interface StagedFile {
   file: File
-  previewUrl: string | null // null for PDFs
+  previewUrl: string | null
 }
 
 interface Props {
@@ -67,6 +65,13 @@ export default function PortalClient({ client, website, initialRequests }: Props
   const [uploadProgress, setUploadProgress] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-scroll to newest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [requests])
 
   // Poll for status updates on pending/approved requests
   useEffect(() => {
@@ -96,7 +101,6 @@ export default function PortalClient({ client, website, initialRequests }: Props
       previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
     }))
     setStagedFiles((prev) => [...prev, ...newStaged])
-    // Reset input so the same file can be re-added if removed
     e.target.value = ''
   }
 
@@ -133,7 +137,6 @@ export default function PortalClient({ client, website, initialRequests }: Props
     setError('')
 
     try {
-      // Upload files first if any
       const attachments = stagedFiles.length > 0 ? await uploadFiles() : []
 
       const res = await fetch('/api/parse-request', {
@@ -157,9 +160,9 @@ export default function PortalClient({ client, website, initialRequests }: Props
 
       setRequests((prev) => [data.request, ...prev])
       setMessage('')
-      // Clean up staged files
       stagedFiles.forEach((f) => { if (f.previewUrl) URL.revokeObjectURL(f.previewUrl) })
       setStagedFiles([])
+      if (textareaRef.current) textareaRef.current.style.height = 'auto'
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -168,144 +171,105 @@ export default function PortalClient({ client, website, initialRequests }: Props
     }
   }
 
-  const lastDeployed = requests.find(r => r.status === 'deployed')?.created_at ?? null
+  // Auto-resize textarea
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value)
+    e.target.style.height = 'auto'
+    e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px'
+  }
+
   const screenshotUrl = website.deployed_url
     ? `https://s0.wp.com/mshots/v1/${encodeURIComponent(website.deployed_url)}?w=800&h=600`
     : null
 
+  // Display oldest first (chat convention) — requests state is newest-first
+  const chatMessages = [...requests].reverse()
+
   return (
-    <div className="min-h-screen bg-[#0F172A] text-white">
+    <div className="flex flex-col bg-[#0F172A] text-white" style={{ minHeight: '100dvh' }}>
+
       {/* Header */}
-      <header className="border-b border-white/10 px-6 py-5">
+      <header className="sticky top-0 z-10 shrink-0 border-b border-white/10 px-4 py-3 bg-[#0F172A]">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <span className="text-lg font-bold">
+          <span className="text-base font-bold">
             Refresh<span className="text-[#3B82F6]">Web</span>
           </span>
           <div className="text-right">
-            <p className="text-sm font-medium">{client.name}</p>
-            <p className="text-xs text-slate-500">{website.deployed_url?.replace('https://', '')}</p>
+            <p className="text-sm font-medium leading-tight">{client.name}</p>
+            {website.deployed_url && (
+              <p className="text-xs text-slate-500 truncate max-w-[160px]">
+                {website.deployed_url.replace('https://', '')}
+              </p>
+            )}
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-10 lg:grid lg:grid-cols-[1fr_340px] lg:gap-10 lg:items-start">
+      {/* Two-column layout on lg+, single-column chat on mobile */}
+      <div className="flex-1 flex min-h-0 lg:max-w-6xl lg:mx-auto lg:w-full">
 
-        {/* ── Left: form + history ── */}
-        <div>
-        {/* Request form */}
-        <div className="mb-12">
-          <h1 className="text-2xl font-bold mb-2">Request an update</h1>
-          <p className="text-slate-400 text-sm mb-6">
-            Describe the change you need in plain English. We&apos;ll review it and get it live.
-          </p>
-          <form onSubmit={handleSubmit}>
-            <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder='e.g. "Change the title to Summer Sale 2024"'
-              className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 min-h-[120px] resize-none mb-3 focus:border-[#3B82F6]"
-              disabled={submitting}
-            />
+        {/* ── Chat column ── */}
+        <div className="flex-1 flex flex-col min-h-0">
 
-            {/* Staged files */}
-            {stagedFiles.length > 0 && (
-              <div className="mb-3 space-y-2">
-                {stagedFiles.map((sf, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-                  >
-                    {sf.previewUrl ? (
-                      <img src={sf.previewUrl} alt={sf.file.name} className="w-10 h-10 rounded object-cover shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 rounded flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                        <FileIcon type={sf.file.type} />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-200 truncate">{sf.file.name}</p>
-                      <p className="text-xs text-slate-500">{formatBytes(sf.file.size)}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(i)}
-                      disabled={submitting}
-                      className="text-slate-600 hover:text-red-400 transition-colors shrink-0 cursor-pointer"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+          {/* Mobile site status strip */}
+          {website.deployed_url && (
+            <div className="lg:hidden shrink-0 flex items-center justify-between px-4 py-2.5" style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                <span className="text-xs text-slate-400 truncate">{website.deployed_url.replace('https://', '')}</span>
+              </div>
+              <a
+                href={website.deployed_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-[#3B82F6] hover:text-blue-400 transition-colors shrink-0 ml-3 min-h-[44px] flex items-center"
+              >
+                View site →
+              </a>
+            </div>
+          )}
+
+          {/* Messages scroll area */}
+          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+            {/* Welcome */}
+            <div className="text-center mb-2">
+              <div className="inline-block px-4 py-2 rounded-full text-xs text-slate-500" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                Need a change? Type it below — we&apos;ll take care of it.
+              </div>
+            </div>
+
+            {/* Empty state */}
+            {chatMessages.length === 0 && (
+              <div className="text-center py-12">
+                <div className="w-12 h-12 rounded-2xl bg-[#3B82F6]/10 flex items-center justify-center mx-auto mb-4">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                  </svg>
+                </div>
+                <p className="text-slate-400 text-sm font-medium">No requests yet</p>
+                <p className="text-slate-600 text-xs mt-1">Send your first request below.</p>
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileChange}
-                  disabled={submitting}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={submitting}
-                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer disabled:opacity-40"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
-                  </svg>
-                  Attach files
-                </button>
-                {uploadProgress && (
-                  <span className="text-xs text-slate-500">{uploadProgress}</span>
-                )}
-                {!uploadProgress && (
-                  <p className="text-xs text-slate-600">JPG, PNG, PDF · max 10 MB</p>
-                )}
-              </div>
-              <Button
-                type="submit"
-                disabled={submitting || !message.trim()}
-                className="bg-[#3B82F6] hover:bg-blue-500 text-white shrink-0"
-              >
-                {submitting ? (uploadProgress || 'Sending…') : 'Send Request'}
-              </Button>
-            </div>
-            {error && <p className="text-red-400 text-sm mt-3">⚠ {error}</p>}
-          </form>
-        </div>
+            {/* Chat bubbles */}
+            {chatMessages.map((req) => {
+              const status = statusConfig[req.status]
+              return (
+                <div key={req.id} className="flex flex-col max-w-[85%] sm:max-w-[75%]">
+                  {/* Message bubble */}
+                  <div
+                    className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-slate-100 leading-relaxed"
+                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    {req.message_text}
 
-        {/* History */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4 text-slate-300">Request history</h2>
-          {requests.length === 0 ? (
-            <p className="text-slate-500 text-sm">No requests yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {requests.map((req) => {
-                const status = statusConfig[req.status]
-                return (
-                  <div key={req.id} className="p-5 rounded-xl border border-white/10 bg-white/5">
-                    <div className="flex items-start justify-between gap-4">
-                      <p className="text-sm text-slate-200 leading-relaxed">{req.message_text}</p>
-                      <Badge className={`shrink-0 text-xs ${status.className}`}>
-                        {status.label}
-                      </Badge>
-                    </div>
+                    {/* Attachments inside bubble */}
                     {req.attachments?.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
+                      <div className="flex flex-wrap gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                         {req.attachments.map((att, i) => (
                           att.type.startsWith('image/') ? (
                             <a key={i} href={att.url} target="_blank" rel="noopener noreferrer">
-                              <img src={att.url} alt={att.name} className="h-14 w-14 rounded object-cover border border-white/10 hover:opacity-80 transition-opacity" />
+                              <img src={att.url} alt={att.name} className="h-14 w-14 rounded-lg object-cover border border-white/10 hover:opacity-80 transition-opacity" />
                             </a>
                           ) : (
                             <a
@@ -323,18 +287,138 @@ export default function PortalClient({ client, website, initialRequests }: Props
                         ))}
                       </div>
                     )}
-                    <p className="text-xs text-slate-500 mt-3">{formatDate(req.created_at)}</p>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-        </div>{/* end left column */}
 
-        {/* ── Right: site preview ── */}
+                  {/* Status + timestamp below bubble */}
+                  <div className="flex items-center gap-2 mt-1.5 ml-1">
+                    <span className={`text-[11px] font-medium ${status.className}`}>
+                      {status.icon} {status.label}
+                    </span>
+                    <span className="text-[11px] text-slate-600">{formatDate(req.created_at)}</span>
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Scroll anchor */}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* ── Sticky input area ── */}
+          <div
+            className="shrink-0 border-t border-white/10 bg-[#0F172A]"
+            style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          >
+            {/* Staged files preview */}
+            {stagedFiles.length > 0 && (
+              <div className="px-3 pt-3 space-y-1.5">
+                {stagedFiles.map((sf, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  >
+                    {sf.previewUrl ? (
+                      <img src={sf.previewUrl} alt={sf.file.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <FileIcon type={sf.file.type} />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-200 truncate">{sf.file.name}</p>
+                      <p className="text-xs text-slate-500">{formatBytes(sf.file.size)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(i)}
+                      disabled={submitting}
+                      className="text-slate-600 hover:text-red-400 transition-colors shrink-0 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {uploadProgress && (
+              <p className="px-4 pt-2 text-xs text-slate-500">{uploadProgress}</p>
+            )}
+
+            {/* Input row */}
+            <form onSubmit={handleSubmit}>
+              <div className="flex items-end gap-2 px-3 py-3">
+                {/* Attach button */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileChange}
+                  disabled={submitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={submitting}
+                  title="Attach files"
+                  className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-40"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+
+                {/* Textarea */}
+                <textarea
+                  ref={textareaRef}
+                  value={message}
+                  onChange={handleTextareaChange}
+                  placeholder='e.g. "Change the title to Summer Sale 2024"'
+                  disabled={submitting}
+                  rows={1}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      if (message.trim() && !submitting) handleSubmit(e as any)
+                    }
+                  }}
+                  className="flex-1 bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm rounded-2xl px-4 py-2.5 outline-none focus:border-[#3B82F6] resize-none overflow-hidden transition-colors disabled:opacity-60"
+                  style={{ minHeight: '44px', maxHeight: '128px' }}
+                />
+
+                {/* Send button */}
+                <button
+                  type="submit"
+                  disabled={submitting || !message.trim()}
+                  className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-[#3B82F6] hover:bg-blue-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {submitting ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                      <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"/>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              {error && <p className="text-red-400 text-xs px-4 pb-2">⚠ {error}</p>}
+            </form>
+          </div>
+        </div>
+
+        {/* ── Desktop sidebar: site preview ── */}
         {website.deployed_url && (
-          <div className="mt-10 lg:mt-0 lg:sticky lg:top-8">
+          <div className="hidden lg:block w-[340px] shrink-0 p-6 sticky top-[57px] self-start"
+            style={{ borderLeft: '1px solid rgba(255,255,255,0.07)', maxHeight: 'calc(100dvh - 57px)', overflowY: 'auto' }}>
             <div
               className="rounded-2xl overflow-hidden"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -349,7 +433,6 @@ export default function PortalClient({ client, website, initialRequests }: Props
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                   />
                 )}
-                {/* Overlay gradient at bottom */}
                 <div className="absolute inset-x-0 bottom-0 h-12 pointer-events-none"
                   style={{ background: 'linear-gradient(to bottom, transparent, rgba(15,23,42,0.8))' }} />
               </div>
@@ -378,18 +461,32 @@ export default function PortalClient({ client, website, initialRequests }: Props
                   </svg>
                   Open live site
                 </a>
-
-                {lastDeployed && (
-                  <p className="text-[11px] text-slate-600 text-center">
-                    Last updated {formatDate(lastDeployed)}
-                  </p>
-                )}
               </div>
             </div>
+
+            {/* Recent activity */}
+            {requests.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Recent Activity</h3>
+                <div className="space-y-2">
+                  {requests.slice(0, 5).map((req) => {
+                    const s = statusConfig[req.status]
+                    return (
+                      <div key={req.id} className="flex items-start gap-2">
+                        <span className={`text-[11px] mt-0.5 ${s.className}`}>{s.icon}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-400 truncate">{req.message_text}</p>
+                          <p className="text-[11px] text-slate-600 mt-0.5">{formatDate(req.created_at)}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
-
-      </main>
+      </div>
     </div>
   )
 }

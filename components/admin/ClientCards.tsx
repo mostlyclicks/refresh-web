@@ -114,7 +114,7 @@ export default function ClientCards({ cards, tierConfig }: Props) {
           <p className="text-slate-500 text-sm">No clients yet.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {sorted.map((client) => {
             const tier = tierConfig[client.tier] ?? tierConfig.basic
             return (

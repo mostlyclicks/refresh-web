@@ -44,6 +44,7 @@ function AddClientModal({ onClose, onCreated }: {
   const [form, setForm] = useState({
     name: '',
     email: '',
+    mobileNumber: '',
     tier: 'basic' as ClientTier,
     websiteName: '',
     githubRepo: '',
@@ -95,13 +96,13 @@ function AddClientModal({ onClose, onCreated }: {
   const labelClass = 'block text-xs text-slate-400 font-medium mb-1.5'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-      <div className="w-full max-w-lg rounded-2xl text-white shadow-2xl" style={{ background: '#131f35', border: '1px solid rgba(255,255,255,0.1)' }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl text-white shadow-2xl max-h-[92vh] overflow-y-auto" style={{ background: '#131f35', border: '1px solid rgba(255,255,255,0.1)' }}>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex items-center justify-between px-5 py-4 sm:px-6 sm:py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <h2 className="text-lg font-bold">{created ? 'Client Created' : 'Add Client'}</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors cursor-pointer">
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
@@ -110,7 +111,7 @@ function AddClientModal({ onClose, onCreated }: {
 
         {/* Success state */}
         {created ? (
-          <div className="px-6 py-8 space-y-6">
+          <div className="px-5 py-6 sm:px-6 sm:py-8 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-400/10 flex items-center justify-center shrink-0">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -129,7 +130,7 @@ function AddClientModal({ onClose, onCreated }: {
                 <span className="flex-1 text-sm text-slate-300 truncate font-mono">{portalUrl}</span>
                 <button
                   onClick={handleCopy}
-                  className="shrink-0 text-xs text-[#3B82F6] hover:text-blue-400 transition-colors cursor-pointer font-medium"
+                  className="shrink-0 text-xs text-[#3B82F6] hover:text-blue-400 transition-colors cursor-pointer font-medium min-h-[44px] px-2"
                 >
                   {copied ? '✓ Copied' : 'Copy'}
                 </button>
@@ -142,13 +143,13 @@ function AddClientModal({ onClose, onCreated }: {
               </p>
             )}
 
-            <Button onClick={onClose} className="w-full bg-[#3B82F6] hover:bg-blue-500 text-white font-medium">
+            <Button onClick={onClose} className="w-full bg-[#3B82F6] hover:bg-blue-500 text-white font-medium min-h-[48px]">
               Done
             </Button>
           </div>
         ) : (
           /* Form */
-          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+          <form onSubmit={handleSubmit} className="px-5 py-4 sm:px-6 sm:py-5 space-y-5">
             {/* Client info */}
             <div>
               <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-widest mb-3">Client Info</p>
@@ -175,6 +176,18 @@ function AddClientModal({ onClose, onCreated }: {
                     className={inputClass}
                     style={inputStyle}
                   />
+                </div>
+                <div>
+                  <label className={labelClass}>Mobile Number <span className="text-slate-600 font-normal">(for SMS updates)</span></label>
+                  <input
+                    type="tel"
+                    value={form.mobileNumber}
+                    onChange={(e) => set('mobileNumber', e.target.value)}
+                    placeholder="+15551234567"
+                    className={inputClass}
+                    style={inputStyle}
+                  />
+                  <p className="text-[11px] text-slate-600 mt-1">E.164 format — e.g. +15551234567</p>
                 </div>
                 <div>
                   <label className={labelClass}>Tier <span className="text-red-400">*</span></label>
@@ -222,12 +235,12 @@ function AddClientModal({ onClose, onCreated }: {
 
             {error && <p className="text-red-400 text-sm">⚠ {error}</p>}
 
-            <div className="flex gap-3 pt-1">
+            <div className="flex gap-3 pt-1 pb-safe">
               <Button
                 type="button"
                 onClick={onClose}
                 variant="outline"
-                className="flex-1 font-medium text-sm cursor-pointer"
+                className="flex-1 font-medium text-sm cursor-pointer min-h-[48px]"
                 style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#94a3b8' }}
               >
                 Cancel
@@ -235,7 +248,7 @@ function AddClientModal({ onClose, onCreated }: {
               <Button
                 type="submit"
                 disabled={saving}
-                className="flex-1 bg-[#3B82F6] hover:bg-blue-500 text-white font-medium text-sm cursor-pointer"
+                className="flex-1 bg-[#3B82F6] hover:bg-blue-500 text-white font-medium text-sm cursor-pointer min-h-[48px]"
               >
                 {saving ? 'Creating…' : 'Create Client'}
               </Button>
@@ -256,12 +269,13 @@ function EditClientModal({ client, onClose, onSaved }: {
 }) {
   const website = client.websites?.[0]
   const [form, setForm] = useState({
-    name:        client.name,
-    email:       client.email,
-    tier:        client.tier,
-    status:      client.status,
-    githubRepo:  website?.github_repo_url ?? '',
-    deployedUrl: website?.deployed_url ?? '',
+    name:         client.name,
+    email:        client.email,
+    mobileNumber: client.mobile_number ?? '',
+    tier:         client.tier,
+    status:       client.status,
+    githubRepo:   website?.github_repo_url ?? '',
+    deployedUrl:  website?.deployed_url ?? '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
@@ -285,7 +299,7 @@ function EditClientModal({ client, onClose, onSaved }: {
     const res = await fetch(`/api/admin/clients/${client.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, websiteId: website?.id }),
+      body: JSON.stringify({ ...form, mobileNumber: form.mobileNumber, websiteId: website?.id }),
     })
 
     const data = await res.json()
@@ -305,29 +319,29 @@ function EditClientModal({ client, onClose, onSaved }: {
   const labelClass = 'block text-xs text-slate-400 font-medium mb-1.5'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-      <div className="w-full max-w-lg rounded-2xl text-white shadow-2xl" style={{ background: '#131f35', border: '1px solid rgba(255,255,255,0.1)' }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl text-white shadow-2xl max-h-[92vh] overflow-y-auto" style={{ background: '#131f35', border: '1px solid rgba(255,255,255,0.1)' }}>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex items-center justify-between px-5 py-4 sm:px-6 sm:py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div>
             <h2 className="text-lg font-bold">Edit Client</h2>
             <p className="text-xs text-slate-500 mt-0.5">{client.name}</p>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors cursor-pointer">
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+        <form onSubmit={handleSubmit} className="px-5 py-4 sm:px-6 sm:py-5 space-y-5">
           {/* Portal link */}
           <div>
             <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-widest mb-3">Portal Link</p>
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <span className="flex-1 text-sm text-slate-400 truncate font-mono">{portalUrl}</span>
-              <button type="button" onClick={handleCopy} className="shrink-0 text-xs text-[#3B82F6] hover:text-blue-400 transition-colors cursor-pointer font-medium">
+              <button type="button" onClick={handleCopy} className="shrink-0 text-xs text-[#3B82F6] hover:text-blue-400 transition-colors cursor-pointer font-medium min-h-[44px] px-2">
                 {copied ? '✓ Copied' : 'Copy'}
               </button>
             </div>
@@ -344,6 +358,18 @@ function EditClientModal({ client, onClose, onSaved }: {
               <div>
                 <label className={labelClass}>Email</label>
                 <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required className={inputClass} style={inputStyle} />
+              </div>
+              <div>
+                <label className={labelClass}>Mobile Number <span className="text-slate-600 font-normal">(for SMS updates)</span></label>
+                <input
+                  type="tel"
+                  value={form.mobileNumber}
+                  onChange={(e) => set('mobileNumber', e.target.value)}
+                  placeholder="+15551234567"
+                  className={inputClass}
+                  style={inputStyle}
+                />
+                <p className="text-[11px] text-slate-600 mt-1">E.164 format — e.g. +15551234567</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -401,7 +427,7 @@ function EditClientModal({ client, onClose, onSaved }: {
               type="button"
               onClick={onClose}
               variant="outline"
-              className="flex-1 font-medium text-sm cursor-pointer"
+              className="flex-1 font-medium text-sm cursor-pointer min-h-[48px]"
               style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#94a3b8' }}
             >
               Cancel
@@ -409,7 +435,7 @@ function EditClientModal({ client, onClose, onSaved }: {
             <Button
               type="submit"
               disabled={saving}
-              className="flex-1 bg-[#3B82F6] hover:bg-blue-500 text-white font-medium text-sm cursor-pointer"
+              className="flex-1 bg-[#3B82F6] hover:bg-blue-500 text-white font-medium text-sm cursor-pointer min-h-[48px]"
             >
               {saving ? 'Saving…' : 'Save Changes'}
             </Button>
@@ -443,7 +469,7 @@ export default function ClientsClient({ initialClients, countMap }: Props) {
   const activeCount = clients.filter(c => c.status === 'active').length
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
       {showModal && (
         <AddClientModal
           onClose={() => setShowModal(false)}
@@ -459,14 +485,14 @@ export default function ClientsClient({ initialClients, countMap }: Props) {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6 md:mb-8">
         <div>
           <h1 className="text-2xl font-bold mb-1">Clients</h1>
           <p className="text-slate-400 text-sm">{clients.length} total · {activeCount} active</p>
         </div>
         <Button
           onClick={() => setShowModal(true)}
-          className="bg-[#3B82F6] hover:bg-blue-500 text-white font-medium text-sm cursor-pointer"
+          className="bg-[#3B82F6] hover:bg-blue-500 text-white font-medium text-sm cursor-pointer min-h-[44px]"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -485,23 +511,9 @@ export default function ClientsClient({ initialClients, countMap }: Props) {
           <p className="text-slate-600 text-xs mt-1">Click Add Client to get started.</p>
         </div>
       ) : (
-        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-          {/* Table header */}
-          <div
-            className="grid grid-cols-[2fr_1.5fr_1fr_1fr_80px_80px_60px] px-5 py-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500"
-            style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            <span>Client</span>
-            <span>Website</span>
-            <span>Tier</span>
-            <span>Status</span>
-            <span className="text-right">Requests</span>
-            <span className="text-right">Since</span>
-            <span />
-          </div>
-
-          {/* Rows */}
-          <div className="divide-y divide-white/5">
+        <>
+          {/* Mobile card list */}
+          <div className="md:hidden space-y-3">
             {clients.map((client) => {
               const website = client.websites?.[0]
               const reqCount = countMap[client.id] ?? 0
@@ -510,68 +522,159 @@ export default function ClientsClient({ initialClients, countMap }: Props) {
               return (
                 <div
                   key={client.id}
-                  className="grid grid-cols-[2fr_1.5fr_1fr_1fr_80px_80px_60px] px-5 py-4 items-center hover:bg-white/[0.03] transition-colors"
+                  className="rounded-2xl p-4"
+                  style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar name={client.name} />
-                    <div className="min-w-0">
-                      <p className="font-medium text-white text-sm truncate">{client.name}</p>
-                      <p className="text-xs text-slate-500 truncate">{client.email}</p>
+                  {/* Name + status */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar name={client.name} />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-white text-[15px] truncate">{client.name}</p>
+                        <p className="text-xs text-slate-500 truncate mt-0.5">{client.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusDot[client.status]}`} />
+                      <span className="text-xs text-slate-300 capitalize">{client.status}</span>
                     </div>
                   </div>
 
-                  <div className="min-w-0">
-                    {website?.deployed_url ? (
+                  {/* Tier + website */}
+                  <div className="flex items-center gap-2 flex-wrap mb-3">
+                    <Badge className={`text-[11px] font-medium capitalize ${tierStyles[client.tier]}`}>
+                      {client.tier}
+                    </Badge>
+                    {website?.deployed_url && (
                       <a
                         href={website.deployed_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-400 text-sm truncate hover:text-[#3B82F6] transition-colors block"
+                        className="text-xs text-slate-500 hover:text-[#3B82F6] transition-colors truncate max-w-[180px]"
                       >
                         {website.deployed_url.replace('https://', '')}
                       </a>
-                    ) : (
-                      <span className="text-slate-600 text-sm">No website</span>
                     )}
                   </div>
 
-                  <Badge className={`text-[11px] font-medium capitalize w-fit ${tierStyles[client.tier]}`}>
-                    {client.tier}
-                  </Badge>
-
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${statusDot[client.status]}`} />
-                    <span className="text-sm text-slate-300 capitalize">{client.status}</span>
-                  </div>
-
-                  <span className="text-right font-mono text-sm text-slate-400">{reqCount}</span>
-                  <span className="text-right text-xs text-slate-500">{since}</span>
-
-                  <div className="flex justify-end items-center gap-3">
-                    <a
-                      href={`/portal/${client.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Open client portal"
-                      className="text-slate-600 hover:text-[#3B82F6] transition-colors cursor-pointer"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
-                        <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                      </svg>
-                    </a>
-                    <button
-                      onClick={() => setEditingClient(client)}
-                      className="text-xs text-slate-500 hover:text-white transition-colors cursor-pointer"
-                    >
-                      Edit
-                    </button>
+                  {/* Footer: requests + actions */}
+                  <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span className="text-xs text-slate-600">{reqCount} requests · since {since}</span>
+                    <div className="flex items-center gap-1">
+                      <a
+                        href={`/portal/${client.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Open client portal"
+                        className="text-slate-600 hover:text-[#3B82F6] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                      </a>
+                      <button
+                        onClick={() => setEditingClient(client)}
+                        className="text-xs text-slate-500 hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center px-2"
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
             })}
           </div>
-        </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+            {/* Table header */}
+            <div
+              className="grid grid-cols-[2fr_1.5fr_1fr_1fr_80px_80px_60px] px-5 py-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500"
+              style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <span>Client</span>
+              <span>Website</span>
+              <span>Tier</span>
+              <span>Status</span>
+              <span className="text-right">Requests</span>
+              <span className="text-right">Since</span>
+              <span />
+            </div>
+
+            {/* Rows */}
+            <div className="divide-y divide-white/5">
+              {clients.map((client) => {
+                const website = client.websites?.[0]
+                const reqCount = countMap[client.id] ?? 0
+                const since = new Date(client.created_at).toLocaleString('en-US', { month: 'short', year: 'numeric' })
+
+                return (
+                  <div
+                    key={client.id}
+                    className="grid grid-cols-[2fr_1.5fr_1fr_1fr_80px_80px_60px] px-5 py-4 items-center hover:bg-white/[0.03] transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar name={client.name} />
+                      <div className="min-w-0">
+                        <p className="font-medium text-white text-sm truncate">{client.name}</p>
+                        <p className="text-xs text-slate-500 truncate">{client.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="min-w-0">
+                      {website?.deployed_url ? (
+                        <a
+                          href={website.deployed_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-slate-400 text-sm truncate hover:text-[#3B82F6] transition-colors block"
+                        >
+                          {website.deployed_url.replace('https://', '')}
+                        </a>
+                      ) : (
+                        <span className="text-slate-600 text-sm">No website</span>
+                      )}
+                    </div>
+
+                    <Badge className={`text-[11px] font-medium capitalize w-fit ${tierStyles[client.tier]}`}>
+                      {client.tier}
+                    </Badge>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusDot[client.status]}`} />
+                      <span className="text-sm text-slate-300 capitalize">{client.status}</span>
+                    </div>
+
+                    <span className="text-right font-mono text-sm text-slate-400">{reqCount}</span>
+                    <span className="text-right text-xs text-slate-500">{since}</span>
+
+                    <div className="flex justify-end items-center gap-3">
+                      <a
+                        href={`/portal/${client.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Open client portal"
+                        className="text-slate-600 hover:text-[#3B82F6] transition-colors cursor-pointer"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                      </a>
+                      <button
+                        onClick={() => setEditingClient(client)}
+                        className="text-xs text-slate-500 hover:text-white transition-colors cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

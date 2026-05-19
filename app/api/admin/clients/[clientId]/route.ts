@@ -7,12 +7,12 @@ export async function PATCH(
 ) {
   try {
     const { clientId } = await params
-    const { name, email, tier, status, githubRepo, deployedUrl, websiteId } = await req.json()
+    const { name, email, mobileNumber, tier, status, githubRepo, deployedUrl, websiteId } = await req.json()
 
     // Update client
     const { error: clientError } = await supabaseAdmin
       .from('clients')
-      .update({ name, email, tier, status })
+      .update({ name, email, mobile_number: mobileNumber?.trim() || null, tier, status })
       .eq('id', clientId)
 
     if (clientError) {

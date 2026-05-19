@@ -15,7 +15,7 @@ const riskConfig: Record<RiskLevel, { label: string; dot: string; badge: string 
 
 function DiffView({ oldCode, newCode }: { oldCode: string; newCode: string }) {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div>
         <div className="flex items-center gap-2 mb-1.5">
           <span className="w-2 h-2 rounded-full bg-red-400 inline-block"></span>
@@ -57,12 +57,21 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <div className="px-6 py-5 flex items-start justify-between gap-4">
+      <div className="px-4 py-4 md:px-6 md:py-5 flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="font-semibold text-white text-[15px]">{item.clients?.name}</span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-400 text-sm">{item.websites?.deployed_url?.replace('https://', '')}</span>
+            {item.source === 'sms' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded tracking-wide"
+                style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', color: '#c084fc' }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.72a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .84h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+                </svg>
+                SMS
+              </span>
+            )}
             {suggestion?.target_file && (
               <>
                 <span className="text-slate-600">·</span>
@@ -102,7 +111,7 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
       </div>
 
       {expanded && (
-        <div className="px-6 pb-6 space-y-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="px-4 pb-4 md:px-6 md:pb-6 space-y-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           {/* Attachments */}
           {item.attachments?.length > 0 && (
             <div className="pt-4">
@@ -202,11 +211,12 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
             />
           </div>
 
-          <div className="flex items-center gap-2 pt-1">
+          {/* Action buttons — stacked full-width on mobile, inline on md+ */}
+          <div className="flex flex-col sm:flex-row gap-2 pt-1">
             <Button
               onClick={() => handle('approve')}
               disabled={!!loading || !suggestion}
-              className="bg-[#3B82F6] hover:bg-blue-500 text-white font-medium text-sm cursor-pointer"
+              className="sm:flex-none w-full sm:w-auto bg-[#3B82F6] hover:bg-blue-500 text-white font-medium text-sm cursor-pointer min-h-[48px] sm:min-h-0"
             >
               {loading === 'approve' ? 'Approving…' : (
                 <>
@@ -221,7 +231,7 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
               onClick={() => handle('reject')}
               disabled={!!loading}
               variant="outline"
-              className="font-medium text-sm cursor-pointer"
+              className="sm:flex-none w-full sm:w-auto font-medium text-sm cursor-pointer min-h-[48px] sm:min-h-0"
               style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#94a3b8' }}
             >
               {loading === 'reject' ? 'Rejecting…' : 'Reject'}
@@ -230,7 +240,7 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
               onClick={() => handle('clarify')}
               disabled={!!loading}
               variant="outline"
-              className="font-medium text-sm cursor-pointer"
+              className="sm:flex-none w-full sm:w-auto font-medium text-sm cursor-pointer min-h-[48px] sm:min-h-0"
               style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#64748b' }}
             >
               Request Clarification
@@ -261,7 +271,7 @@ export default function ApprovalsClient({ initialRequests }: { initialRequests: 
   }
 
   return (
-    <div className="px-8 py-8 max-w-5xl">
+    <div className="px-4 py-6 md:px-8 md:py-8 max-w-5xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-1">Pending Approvals</h1>
         <p className="text-slate-400 text-sm">
