@@ -174,8 +174,6 @@ export default function PortalClient({ client, website, initialRequests }: Props
   // Auto-resize textarea
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value)
-    e.target.style.height = 'auto'
-    e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px'
   }
 
   const screenshotUrl = website.deployed_url
@@ -229,85 +227,9 @@ export default function PortalClient({ client, website, initialRequests }: Props
             </div>
           )}
 
-          {/* Messages scroll area */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-            {/* Welcome */}
-            <div className="text-center mb-2">
-              <div className="inline-block px-4 py-2 rounded-full text-xs text-slate-500" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                Need a change? Type it below — we&apos;ll take care of it.
-              </div>
-            </div>
-
-            {/* Empty state */}
-            {chatMessages.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-12 h-12 rounded-2xl bg-[#3B82F6]/10 flex items-center justify-center mx-auto mb-4">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                  </svg>
-                </div>
-                <p className="text-slate-400 text-sm font-medium">No requests yet</p>
-                <p className="text-slate-600 text-xs mt-1">Send your first request below.</p>
-              </div>
-            )}
-
-            {/* Chat bubbles */}
-            {chatMessages.map((req) => {
-              const status = statusConfig[req.status]
-              return (
-                <div key={req.id} className="flex flex-col max-w-[85%] sm:max-w-[75%]">
-                  {/* Message bubble */}
-                  <div
-                    className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-slate-100 leading-relaxed"
-                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  >
-                    {req.message_text}
-
-                    {/* Attachments inside bubble */}
-                    {req.attachments?.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                        {req.attachments.map((att, i) => (
-                          att.type.startsWith('image/') ? (
-                            <a key={i} href={att.url} target="_blank" rel="noopener noreferrer">
-                              <img src={att.url} alt={att.name} className="h-14 w-14 rounded-lg object-cover border border-white/10 hover:opacity-80 transition-opacity" />
-                            </a>
-                          ) : (
-                            <a
-                              key={i}
-                              href={att.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white transition-colors"
-                              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-                            >
-                              <FileIcon type={att.type} />
-                              {att.name}
-                            </a>
-                          )
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Status + timestamp below bubble */}
-                  <div className="flex items-center gap-2 mt-1.5 ml-1">
-                    <span className={`text-[11px] font-medium ${status.className}`}>
-                      {status.icon} {status.label}
-                    </span>
-                    <span className="text-[11px] text-slate-600">{formatDate(req.created_at)}</span>
-                  </div>
-                </div>
-              )
-            })}
-
-            {/* Scroll anchor */}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* ── Sticky input area ── */}
+          {/* ── Input area ── */}
           <div
-            className="shrink-0 border-t border-white/10 bg-[#0F172A]"
-            style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+            className="shrink-0 border-b border-white/10 bg-[#0F172A]"
           >
             {/* Staged files preview */}
             {stagedFiles.length > 0 && (
@@ -380,15 +302,14 @@ export default function PortalClient({ client, website, initialRequests }: Props
                   onChange={handleTextareaChange}
                   placeholder='e.g. "Change the title to Summer Sale 2024"'
                   disabled={submitting}
-                  rows={1}
+                  rows={3}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
                       if (message.trim() && !submitting) handleSubmit(e as any)
                     }
                   }}
-                  className="flex-1 bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm rounded-2xl px-4 py-2.5 outline-none focus:border-[#3B82F6] resize-none overflow-hidden transition-colors disabled:opacity-60"
-                  style={{ minHeight: '44px', maxHeight: '128px' }}
+                  className="flex-1 bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm rounded-2xl px-4 py-2.5 outline-none focus:border-[#3B82F6] resize-none transition-colors disabled:opacity-60"
                 />
 
                 {/* Send button */}
@@ -413,6 +334,82 @@ export default function PortalClient({ client, website, initialRequests }: Props
               {error && <p className="text-red-400 text-xs px-4 pb-2">⚠ {error}</p>}
             </form>
           </div>
+
+          {/* Messages scroll area */}
+          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+            {/* Welcome */}
+            <div className="text-center mb-2">
+              <div className="inline-block px-4 py-2 rounded-full text-xs text-slate-500" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                Your request history is below.
+              </div>
+            </div>
+
+            {/* Empty state */}
+            {chatMessages.length === 0 && (
+              <div className="text-center py-12">
+                <div className="w-12 h-12 rounded-2xl bg-[#3B82F6]/10 flex items-center justify-center mx-auto mb-4">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                  </svg>
+                </div>
+                <p className="text-slate-400 text-sm font-medium">No requests yet</p>
+                <p className="text-slate-600 text-xs mt-1">Send your first request below.</p>
+              </div>
+            )}
+
+            {/* Chat bubbles */}
+            {chatMessages.map((req) => {
+              const status = statusConfig[req.status]
+              return (
+                <div key={req.id} className="flex flex-col max-w-[85%] sm:max-w-[75%]">
+                  {/* Message bubble */}
+                  <div
+                    className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-slate-100 leading-relaxed"
+                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    {req.message_text}
+
+                    {/* Attachments inside bubble */}
+                    {req.attachments?.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                        {req.attachments.map((att, i) => (
+                          att.type.startsWith('image/') ? (
+                            <a key={i} href={att.url} target="_blank" rel="noopener noreferrer">
+                              <img src={att.url} alt={att.name} className="h-14 w-14 rounded-lg object-cover border border-white/10 hover:opacity-80 transition-opacity" />
+                            </a>
+                          ) : (
+                            <a
+                              key={i}
+                              href={att.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white transition-colors"
+                              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                            >
+                              <FileIcon type={att.type} />
+                              {att.name}
+                            </a>
+                          )
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status + timestamp below bubble */}
+                  <div className="flex items-center gap-2 mt-1.5 ml-1">
+                    <span className={`text-[11px] font-medium ${status.className}`}>
+                      {status.icon} {status.label}
+                    </span>
+                    <span className="text-[11px] text-slate-600">{formatDate(req.created_at)}</span>
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Scroll anchor */}
+            <div ref={messagesEndRef} />
+          </div>
+
         </div>
 
         {/* ── Desktop sidebar: site preview ── */}
