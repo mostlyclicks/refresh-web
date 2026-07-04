@@ -7,10 +7,23 @@ import { Textarea } from '@/components/ui/textarea'
 
 type RiskLevel = 'low' | 'medium' | 'high'
 
+type EditableChange = {
+  target_file: string
+  target_section?: string
+  old_code: string
+  new_code: string
+}
+
+type ActionResult = { ok: boolean; error?: string }
+
 const riskConfig: Record<RiskLevel, { label: string; dot: string; badge: string }> = {
   low:    { label: 'Low risk',    dot: 'bg-emerald-400', badge: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' },
   medium: { label: 'Medium risk', dot: 'bg-amber-400',   badge: 'bg-amber-400/10 text-amber-400 border-amber-400/20' },
   high:   { label: 'High risk',   dot: 'bg-red-400',     badge: 'bg-red-400/10 text-red-400 border-red-400/20' },
+}
+
+function codeRows(code: string) {
+  return Math.min(Math.max(code.split('\n').length + 1, 3), 16)
 }
 
 function DiffView({ oldCode, newCode }: { oldCode: string; newCode: string }) {
@@ -40,18 +53,96 @@ function DiffView({ oldCode, newCode }: { oldCode: string; newCode: string }) {
   )
 }
 
-function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, suggestionId: string, action: string, notes: string) => Promise<void> }) {
+function EditableDiffView({
+  change,
+  onChange,
+}: {
+  change: EditableChange
+  onChange: (updated: EditableChange) => void
+}) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="text-[11px] text-slate-500 font-medium mb-1 block">Target file</label>
+        <input
+          type="text"
+          value={change.target_file}
+          onChange={(e) => onChange({ ...change, target_file: e.target.value })}
+          className="w-full sm:w-72 rounded-lg px-3 py-2 font-mono text-xs text-slate-200 outline-none focus:border-blue-500/50"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-400 inline-block"></span>
+            <span className="text-xs text-slate-500 font-medium">Before — must match the file exactly</span>
+          </div>
+          <textarea
+            value={change.old_code}
+            onChange={(e) => onChange({ ...change, old_code: e.target.value })}
+            rows={codeRows(change.old_code)}
+            spellCheck={false}
+            className="w-full rounded-xl p-4 text-xs leading-relaxed font-mono text-red-300 resize-y outline-none focus:border-red-400/40"
+            style={{ background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.15)' }}
+          />
+        </div>
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+            <span className="text-xs text-slate-500 font-medium">After</span>
+          </div>
+          <textarea
+            value={change.new_code}
+            onChange={(e) => onChange({ ...change, new_code: e.target.value })}
+            rows={codeRows(change.new_code)}
+            spellCheck={false}
+            className="w-full rounded-xl p-4 text-xs leading-relaxed font-mono text-emerald-300 resize-y outline-none focus:border-emerald-400/40"
+            style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, suggestionId: string, action: string, notes: string, changes?: EditableChange[]) => Promise<ActionResult> }) {
   const [notes, setNotes] = useState('')
   const [expanded, setExpanded] = useState(true)
   const [loading, setLoading] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [edited, setEdited] = useState<EditableChange[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const suggestion = item.suggestions?.[0]
   const claudeResponse = suggestion?.claude_response
   const risk = riskConfig[(suggestion?.risk_level as RiskLevel) ?? 'low']
 
+  const originalChanges: EditableChange[] = claudeResponse?.changes?.length
+    ? claudeResponse.changes
+    : suggestion
+      ? [{ target_file: suggestion.target_file ?? '', target_section: '', old_code: suggestion.old_code ?? '', new_code: suggestion.new_code ?? '' }]
+      : []
+
+  const changes = edited ?? originalChanges
+  const dirty = edited !== null && JSON.stringify(edited) !== JSON.stringify(originalChanges)
+
+  const updateChange = (index: number, updated: EditableChange) => {
+    const base = edited ?? originalChanges.map((c) => ({ ...c }))
+    setEdited(base.map((c, i) => (i === index ? updated : c)))
+  }
+
   const handle = async (action: string) => {
     setLoading(action)
-    await onAction(item.id, suggestion?.id, action, notes)
+    setError(null)
+    const result = await onAction(
+      item.id,
+      suggestion?.id,
+      action,
+      notes,
+      action === 'approve' && dirty ? edited! : undefined
+    )
+    if (!result.ok) setError(result.error ?? 'Something went wrong — please try again.')
     setLoading(null)
   }
 
@@ -77,6 +168,12 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
                 <span className="text-slate-600">·</span>
                 <span className="font-mono text-[11px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">{suggestion.target_file}</span>
               </>
+            )}
+            {dirty && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded tracking-wide"
+                style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.25)', color: '#fbbf24' }}>
+                EDITED
+              </span>
             )}
           </div>
           <p className="text-slate-300 text-sm leading-relaxed">&ldquo;{item.message_text}&rdquo;</p>
@@ -153,6 +250,36 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
                     Summary: <span className="text-slate-200">{claudeResponse.request_summary}</span>
                   </span>
                 )}
+                <span className="flex items-center gap-3 ml-auto">
+                  {dirty && (
+                    <button
+                      onClick={() => setEdited(null)}
+                      className="text-xs text-slate-500 hover:text-amber-300 transition-colors cursor-pointer"
+                    >
+                      Reset edits
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setEditing(!editing)}
+                    className="text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    {editing ? (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Done editing
+                      </>
+                    ) : (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/>
+                        </svg>
+                        Edit changes
+                      </>
+                    )}
+                  </button>
+                </span>
               </div>
 
               {suggestion.risk_level !== 'low' && claudeResponse?.risk_description && (
@@ -165,35 +292,33 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
                 </div>
               )}
 
-              {/* Render a diff per change */}
-              {(() => {
-                const changes: any[] = claudeResponse?.changes?.length
-                  ? claudeResponse.changes
-                  : [{ target_file: suggestion.target_file, old_code: suggestion.old_code, new_code: suggestion.new_code }]
-
-                return (
-                  <div className="space-y-4">
-                    {changes.map((change: any, i: number) => (
-                      <div key={i}>
-                        {changes.length > 1 && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-widest">
-                              Change {i + 1} of {changes.length}
-                            </span>
-                            <span className="font-mono text-[11px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">
-                              {change.target_file}
-                            </span>
-                            {change.target_section && (
-                              <span className="text-[11px] text-slate-600">— {change.target_section}</span>
-                            )}
-                          </div>
+              {/* One panel per change — read-only diff, or editable when editing */}
+              <div className="space-y-4">
+                {changes.map((change, i) => (
+                  <div key={i}>
+                    {(changes.length > 1 || editing) && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-widest">
+                          Change {i + 1} of {changes.length}
+                        </span>
+                        {!editing && (
+                          <span className="font-mono text-[11px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">
+                            {change.target_file}
+                          </span>
                         )}
-                        <DiffView oldCode={change.old_code ?? ''} newCode={change.new_code ?? ''} />
+                        {!editing && change.target_section && (
+                          <span className="text-[11px] text-slate-600">— {change.target_section}</span>
+                        )}
                       </div>
-                    ))}
+                    )}
+                    {editing ? (
+                      <EditableDiffView change={change} onChange={(updated) => updateChange(i, updated)} />
+                    ) : (
+                      <DiffView oldCode={change.old_code ?? ''} newCode={change.new_code ?? ''} />
+                    )}
                   </div>
-                )
-              })()}
+                ))}
+              </div>
             </>
           ) : (
             <div className="pt-4 text-sm text-slate-500 italic">Claude is still processing this request…</div>
@@ -211,11 +336,22 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
             />
           </div>
 
+          {error && (
+            <div className="flex items-start gap-3 text-sm rounded-xl px-4 py-3"
+              style={{ background: 'rgba(248,113,113,0.07)', border: '1px solid rgba(248,113,113,0.2)' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span className="text-red-300">{error} — the request is still in the queue. Edit the changes and try again.</span>
+            </div>
+          )}
+
           {/* Action buttons — stacked full-width on mobile, inline on md+ */}
           <div className="flex flex-col sm:flex-row gap-2 pt-1">
             <Button
               onClick={() => handle('approve')}
-              disabled={!!loading || !suggestion}
+              disabled={!!loading || !suggestion || editing}
+              title={editing ? 'Finish editing first' : undefined}
               className="sm:flex-none w-full sm:w-auto bg-[#3B82F6] hover:bg-blue-500 text-white font-medium text-sm cursor-pointer min-h-[48px] sm:min-h-0"
             >
               {loading === 'approve' ? 'Approving…' : (
@@ -223,7 +359,7 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
-                  Approve & Deploy
+                  {dirty ? 'Approve Edited & Deploy' : 'Approve & Deploy'}
                 </>
               )}
             </Button>
@@ -255,19 +391,29 @@ function ApprovalCard({ item, onAction }: { item: any; onAction: (id: string, su
 export default function ApprovalsClient({ initialRequests }: { initialRequests: any[] }) {
   const [requests, setRequests] = useState(initialRequests)
 
-  const handleAction = async (requestId: string, suggestionId: string, action: string, notes: string) => {
+  const handleAction = async (
+    requestId: string,
+    suggestionId: string,
+    action: string,
+    notes: string,
+    changes?: EditableChange[]
+  ): Promise<ActionResult> => {
     // 'dismiss' maps to 'reject' on the API — just a UX distinction
     const apiAction = action === 'dismiss' ? 'reject' : action
 
     const res = await fetch('/api/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requestId, suggestionId, action: apiAction, notes }),
+      body: JSON.stringify({ requestId, suggestionId, action: apiAction, notes, changes }),
     })
 
     if (res.ok) {
       setRequests((prev) => prev.filter((r) => r.id !== requestId))
+      return { ok: true }
     }
+
+    const body = await res.json().catch(() => ({}))
+    return { ok: false, error: body?.error ?? `Request failed (${res.status})` }
   }
 
   return (
