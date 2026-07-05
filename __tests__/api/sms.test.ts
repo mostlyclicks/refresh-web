@@ -104,7 +104,7 @@ function setupHappyPath(overrides: {
   website?: unknown
   request?: unknown
 } = {}) {
-  const client  = overrides.client  ?? { id: 'client-uuid-1' }
+  const client  = overrides.client  ?? { id: 'client-uuid-1', tier: 'professional' }
   const website = overrides.website ?? { id: 'website-uuid-1', github_repo_url: 'owner/repo', client_id: 'client-uuid-1' }
   const request = overrides.request ?? { id: 'request-uuid-1' }
 
@@ -133,15 +133,10 @@ describe('POST /api/sms', () => {
     afterCallback = null
   })
 
-  // ── Basic plan monthly cap ────────────────────────────────────────────────
+  // ── Professional-tier gate ────────────────────────────────────────────────
 
-  it('blocks a basic-tier client who has used 20 requests this month', async () => {
-    setupHappyPath({
-      client: { id: 'client-uuid-1', tier: 'basic' },
-      request: { id: 'request-uuid-1' },
-    })
-    // requests table resolves count=20 for the head-count query
-    const requestQuery = mockQuery({ data: { id: 'request-uuid-1' }, count: 20 })
+  it('blocks a basic-tier client with an upgrade message', async () => {
+    const requestQuery = mockQuery({ data: { id: 'request-uuid-1' } })
     const clientQuery = mockQuery({ data: { id: 'client-uuid-1', tier: 'basic' } })
     ;(mockSupabase.from as Mock).mockImplementation((table: string) => {
       if (table === 'clients') return clientQuery
@@ -149,31 +144,33 @@ describe('POST /api/sms', () => {
       return mockQuery({ data: null })
     })
 
-    const res = await POST(makeRequest({ From: '+15551234567', Body: 'One more change', NumMedia: '0' }))
+    const res = await POST(makeRequest({ From: '+15551234567', Body: 'Change the headline', NumMedia: '0' }))
     const text = await res.text()
 
-    expect(parseTwiml(text)).toContain("used all 20 updates")
+    expect(parseTwiml(text)).toContain('Professional plan')
     // Nothing was inserted, no background parse queued
     expect(requestQuery.insert).not.toHaveBeenCalled()
     expect(afterCallback).toBeNull()
   })
 
-  it('allows a basic-tier client under the monthly cap', async () => {
-    const requestQuery = mockQuery({ data: { id: 'request-uuid-1' }, count: 5 })
-    const clientQuery = mockQuery({ data: { id: 'client-uuid-1', tier: 'basic' } })
-    const websiteQuery = mockQuery({ data: { id: 'website-uuid-1', github_repo_url: 'owner/repo', client_id: 'client-uuid-1' } })
+  it('blocks a custom-tier client too (SMS is professional-only)', async () => {
+    const clientQuery = mockQuery({ data: { id: 'client-uuid-1', tier: 'custom' } })
     ;(mockSupabase.from as Mock).mockImplementation((table: string) => {
       if (table === 'clients') return clientQuery
-      if (table === 'websites') return websiteQuery
-      if (table === 'requests') return requestQuery
       return mockQuery({ data: null })
     })
+
+    const res = await POST(makeRequest({ From: '+15551234567', Body: 'Change the headline', NumMedia: '0' }))
+    expect(parseTwiml(await res.text())).toContain('Professional plan')
+  })
+
+  it('allows a professional-tier client through', async () => {
+    setupHappyPath()
 
     const res = await POST(makeRequest({ From: '+15551234567', Body: 'Change headline', NumMedia: '0' }))
     const text = await res.text()
 
     expect(parseTwiml(text)).toBe("Got it — we'll review and update your site shortly.")
-    expect(requestQuery.insert).toHaveBeenCalled()
   })
 
   // ── Happy path: plain text message ────────────────────────────────────────
@@ -381,7 +378,7 @@ describe('POST /api/sms', () => {
   // ── Client has no website / GitHub repo ───────────────────────────────────
 
   it('returns fallback TwiML when client has no website linked', async () => {
-    const clientQuery  = mockQuery({ data: { id: 'client-uuid-1' } })
+    const clientQuery  = mockQuery({ data: { id: 'client-uuid-1', tier: 'professional' } })
     const websiteQuery = mockQuery({ data: null })
     ;(mockSupabase.from as Mock).mockImplementation((table: string) => {
       if (table === 'clients')  return clientQuery
@@ -396,7 +393,7 @@ describe('POST /api/sms', () => {
   })
 
   it('returns fallback TwiML when website has no github_repo_url', async () => {
-    const clientQuery  = mockQuery({ data: { id: 'client-uuid-1' } })
+    const clientQuery  = mockQuery({ data: { id: 'client-uuid-1', tier: 'professional' } })
     const websiteQuery = mockQuery({ data: { id: 'website-uuid-1', github_repo_url: null } })
     ;(mockSupabase.from as Mock).mockImplementation((table: string) => {
       if (table === 'clients')  return clientQuery
@@ -451,7 +448,7 @@ describe('POST /api/sms', () => {
   // ── Database error on request insert ──────────────────────────────────────
 
   it('returns fallback TwiML if DB insert fails', async () => {
-    const clientQuery  = mockQuery({ data: { id: 'client-uuid-1' } })
+    const clientQuery  = mockQuery({ data: { id: 'client-uuid-1', tier: 'professional' } })
     const websiteQuery = mockQuery({ data: { id: 'website-uuid-1', github_repo_url: 'owner/repo' } })
     const requestQuery = mockQuery({ data: null, error: { message: 'DB error' } })
 

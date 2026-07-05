@@ -293,7 +293,7 @@ export default function HomePage() {
                 name: 'Professional',
                 plan: 'professional',
                 price: '$99',
-                features: ['Unlimited update requests', 'Priority review turnaround', 'Auto-deploy on approval', 'Change history log', 'Rollback on request'],
+                features: ['Unlimited update requests', 'Update by text message (SMS)', 'Priority review turnaround', 'Auto-deploy on approval', 'Change history log', 'Rollback on request'],
                 highlight: true,
                 delay: 150,
               },

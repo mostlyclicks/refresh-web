@@ -92,18 +92,9 @@ export async function POST(req: NextRequest) {
       return twiml("This number isn't registered. Visit webrefresh.io to get started.")
     }
 
-    // Basic plan: 20 updates/month (same cap the portal enforces)
-    if (client.tier === 'basic') {
-      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-      const { count } = await supabaseAdmin
-        .from('requests')
-        .select('*', { count: 'exact', head: true })
-        .eq('client_id', client.id)
-        .gte('created_at', monthStart)
-
-      if ((count ?? 0) >= 20) {
-        return twiml("You've used all 20 updates included in your plan this month. Reply UPGRADE to hear about unlimited updates, or send your next request on the 1st.")
-      }
+    // Text-message updates are a Professional plan feature
+    if (client.tier !== 'professional') {
+      return twiml("Text updates are part of the Professional plan. You can send this same request from your online portal — or reply UPGRADE and we'll reach out about unlimited updates by text.")
     }
 
     // Get client's website
