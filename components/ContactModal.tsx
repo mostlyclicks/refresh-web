@@ -57,22 +57,18 @@ export function ContactModal({ open, initialPlan, onClose }: Props) {
     }
   }
 
-  const field = 'w-full px-4 py-3 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/50'
-  const fieldStyle = { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }
+  const field = 'w-full px-4 py-3 rounded-xl text-sm text-[var(--ink)] placeholder-[var(--ink-soft)]/70 outline-none focus:ring-2 focus:ring-[var(--coral)]/40 bg-[var(--paper-deep)] border border-[var(--line)]'
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(36,28,19,0.45)', backdropFilter: 'blur(4px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div
-        className="w-full max-w-md rounded-2xl p-8 relative"
-        style={{ background: '#0F172A', border: '1px solid rgba(255,255,255,0.1)' }}
-      >
+      <div className="w-full max-w-md rounded-2xl p-8 relative bg-[var(--paper)] border border-[var(--line)] shadow-[0_40px_90px_-24px_rgba(36,28,19,0.35)]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-500 hover:text-white text-lg leading-none"
+          className="absolute top-4 right-4 text-[var(--ink-soft)] hover:text-[var(--ink)] text-lg leading-none cursor-pointer"
         >
           ✕
         </button>
@@ -80,25 +76,24 @@ export function ContactModal({ open, initialPlan, onClose }: Props) {
         {done ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-4">👋</div>
-            <h2 className="text-xl font-bold mb-2">We'll be in touch!</h2>
-            <p className="text-slate-400 text-sm">Thanks for reaching out. Carlos will get back to you within 1 business day.</p>
+            <h2 className="text-2xl mb-2 text-[var(--ink)]" style={{ fontFamily: 'var(--font-display)' }}>We&rsquo;ll be in touch!</h2>
+            <p className="text-[var(--ink-soft)] text-sm">Thanks for reaching out — you&rsquo;ll hear back within 1 business day.</p>
             <Button
               onClick={onClose}
-              className="mt-6 bg-[#3B82F6] hover:bg-blue-500 text-white px-8"
+              className="mt-6 rounded-full bg-[var(--coral)] hover:bg-[var(--coral-deep)] text-white px-8"
             >
               Done
             </Button>
           </div>
         ) : (
           <>
-            <h2 className="text-xl font-bold mb-1">Get started with RefreshWeb</h2>
-            <p className="text-slate-400 text-sm mb-6">Tell us about your business and we'll reach out within 1 business day.</p>
+            <h2 className="text-2xl mb-1 text-[var(--ink)]" style={{ fontFamily: 'var(--font-display)' }}>Let&rsquo;s get started</h2>
+            <p className="text-[var(--ink-soft)] text-sm mb-6">Tell us about your business and we&rsquo;ll reach out within 1 business day.</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 required
                 className={field}
-                style={fieldStyle}
                 placeholder="Your name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -107,7 +102,6 @@ export function ContactModal({ open, initialPlan, onClose }: Props) {
                 required
                 type="email"
                 className={field}
-                style={fieldStyle}
                 placeholder="Email address"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -115,14 +109,13 @@ export function ContactModal({ open, initialPlan, onClose }: Props) {
               <input
                 required
                 className={field}
-                style={fieldStyle}
                 placeholder="Business name"
                 value={form.business}
                 onChange={(e) => setForm({ ...form, business: e.target.value })}
               />
               <select
                 className={field}
-                style={{ ...fieldStyle, color: form.plan ? 'white' : '#64748b' }}
+                style={{ color: form.plan ? 'var(--ink)' : 'var(--ink-soft)' }}
                 value={form.plan}
                 onChange={(e) => setForm({ ...form, plan: e.target.value })}
               >
@@ -134,20 +127,19 @@ export function ContactModal({ open, initialPlan, onClose }: Props) {
               <textarea
                 rows={3}
                 className={field}
-                style={fieldStyle}
                 placeholder="Anything else you'd like us to know? (optional)"
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
               />
 
               {error && (
-                <p className="text-red-400 text-sm">{error}</p>
+                <p className="text-red-500 text-sm">{error}</p>
               )}
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#3B82F6] hover:bg-blue-500 text-white py-3 disabled:opacity-50"
+                className="w-full rounded-full bg-[var(--coral)] hover:bg-[var(--coral-deep)] text-white py-3 disabled:opacity-50"
               >
                 {loading ? 'Sending…' : 'Send inquiry'}
               </Button>
