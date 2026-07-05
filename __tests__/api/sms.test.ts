@@ -82,16 +82,19 @@ function parseTwiml(text: string): string {
 }
 
 /** Builds chainable Supabase mock for a single query */
-function mockQuery(result: { data?: unknown; error?: unknown }) {
+function mockQuery(result: { data?: unknown; error?: unknown; count?: number }) {
   const chain: Record<string, unknown> = {}
   const end = { ...result }
-  ;['select', 'insert', 'eq', 'single'].forEach((m) => {
+  ;['select', 'insert', 'eq', 'gte', 'single'].forEach((m) => {
     chain[m] = vi.fn(() => chain)
   })
   // Terminal: single() resolves
   ;(chain.single as Mock).mockResolvedValue(end)
   // Terminal: insert().select().single()
   ;(chain.select as Mock).mockReturnValue(chain)
+  // Terminal: awaiting the chain directly (head-count queries)
+  ;(chain as any).then = (resolve: any, reject: any) =>
+    Promise.resolve(end).then(resolve, reject)
   return chain
 }
 
@@ -128,6 +131,49 @@ describe('POST /api/sms', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     afterCallback = null
+  })
+
+  // ── Basic plan monthly cap ────────────────────────────────────────────────
+
+  it('blocks a basic-tier client who has used 20 requests this month', async () => {
+    setupHappyPath({
+      client: { id: 'client-uuid-1', tier: 'basic' },
+      request: { id: 'request-uuid-1' },
+    })
+    // requests table resolves count=20 for the head-count query
+    const requestQuery = mockQuery({ data: { id: 'request-uuid-1' }, count: 20 })
+    const clientQuery = mockQuery({ data: { id: 'client-uuid-1', tier: 'basic' } })
+    ;(mockSupabase.from as Mock).mockImplementation((table: string) => {
+      if (table === 'clients') return clientQuery
+      if (table === 'requests') return requestQuery
+      return mockQuery({ data: null })
+    })
+
+    const res = await POST(makeRequest({ From: '+15551234567', Body: 'One more change', NumMedia: '0' }))
+    const text = await res.text()
+
+    expect(parseTwiml(text)).toContain("used all 20 updates")
+    // Nothing was inserted, no background parse queued
+    expect(requestQuery.insert).not.toHaveBeenCalled()
+    expect(afterCallback).toBeNull()
+  })
+
+  it('allows a basic-tier client under the monthly cap', async () => {
+    const requestQuery = mockQuery({ data: { id: 'request-uuid-1' }, count: 5 })
+    const clientQuery = mockQuery({ data: { id: 'client-uuid-1', tier: 'basic' } })
+    const websiteQuery = mockQuery({ data: { id: 'website-uuid-1', github_repo_url: 'owner/repo', client_id: 'client-uuid-1' } })
+    ;(mockSupabase.from as Mock).mockImplementation((table: string) => {
+      if (table === 'clients') return clientQuery
+      if (table === 'websites') return websiteQuery
+      if (table === 'requests') return requestQuery
+      return mockQuery({ data: null })
+    })
+
+    const res = await POST(makeRequest({ From: '+15551234567', Body: 'Change headline', NumMedia: '0' }))
+    const text = await res.text()
+
+    expect(parseTwiml(text)).toBe("Got it — we'll review and update your site shortly.")
+    expect(requestQuery.insert).toHaveBeenCalled()
   })
 
   // ── Happy path: plain text message ────────────────────────────────────────

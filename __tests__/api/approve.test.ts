@@ -7,7 +7,7 @@
  * Run: npx vitest __tests__/api/approve.test.ts
  */
 
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 import { NextRequest } from 'next/server'
 
 // ─── Mock: Supabase ───────────────────────────────────────────────────────────
@@ -300,5 +300,44 @@ describe('POST /api/approve', () => {
     const res = await POST(makeRequest({ requestId: 'req-1', action: 'reject' }))
     expect(res.status).toBe(500)
     expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  // ── Admin auth gate ───────────────────────────────────────────────────────
+
+  describe('when ADMIN_PASSWORD is set', () => {
+    const { createHash } = require('crypto') as typeof import('crypto')
+
+    beforeEach(() => {
+      process.env.ADMIN_PASSWORD = 'hunter2'
+    })
+
+    afterEach(() => {
+      delete process.env.ADMIN_PASSWORD
+    })
+
+    it('returns 401 without a valid session cookie and touches nothing', async () => {
+      const { requests } = setupTables()
+      const res = await POST(makeRequest({ requestId: 'req-1', suggestionId: 'sug-1', action: 'approve' }))
+
+      expect(res.status).toBe(401)
+      expect(requests.update).not.toHaveBeenCalled()
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('proceeds with a valid session cookie', async () => {
+      setupTables()
+      const token = createHash('sha256').update('hunter2').digest('hex')
+      const req = new NextRequest('http://localhost/api/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', cookie: `admin_session=${token}` },
+        body: JSON.stringify({ requestId: 'req-1', suggestionId: 'sug-1', action: 'approve' }),
+      })
+
+      const res = await POST(req)
+      expect(res.status).toBe(200)
+      // The deploy call forwards the admin cookie
+      const deployHeaders = mockFetch.mock.calls[0][1].headers
+      expect(deployHeaders.cookie).toContain('admin_session=')
+    })
   })
 })

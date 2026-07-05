@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/db'
+import { requireAdmin } from '@/lib/adminAuth'
 import { CodeChange } from '@/lib/types'
 
 // Edited changes arrive from the approval UI — validate before they reach the deploy pipeline.
@@ -30,6 +31,9 @@ function validateChanges(raw: unknown): { changes?: CodeChange[]; error?: string
 }
 
 export async function POST(req: NextRequest) {
+  const unauthorized = requireAdmin(req)
+  if (unauthorized) return unauthorized
+
   try {
     const { requestId, suggestionId, action, changes: editedChanges } = await req.json()
 
@@ -99,7 +103,8 @@ export async function POST(req: NextRequest) {
       // Trigger deployment pipeline
       const deployRes = await fetch(new URL('/api/deploy', req.url).toString(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // Forward the admin session cookie — the deploy API is gated too
+        headers: { 'Content-Type': 'application/json', cookie: req.headers.get('cookie') ?? '' },
         body: JSON.stringify({ suggestionId }),
       })
 

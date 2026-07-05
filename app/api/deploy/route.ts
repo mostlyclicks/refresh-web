@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { after } from 'next/server'
 import { supabaseAdmin } from '@/lib/db'
 import { sendUpdateLiveEmail } from '@/lib/email'
+import { requireAdmin } from '@/lib/adminAuth'
 import { CodeChange } from '@/lib/types'
 import { Octokit } from '@octokit/rest'
 
@@ -47,6 +48,9 @@ async function applyChangesToFile(
 }
 
 export async function POST(req: NextRequest) {
+  const unauthorized = requireAdmin(req)
+  if (unauthorized) return unauthorized
+
   try {
     const { suggestionId } = await req.json()
 
