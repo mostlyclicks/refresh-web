@@ -12,7 +12,7 @@ export function MobileNav() {
       <div className="hidden md:flex items-center gap-8">
         <a href="#how-it-works" className="text-sm font-medium text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors">How it works</a>
         <a href="#pricing" className="text-sm font-medium text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors">Pricing</a>
-        <Button size="sm" className="rounded-full px-5 bg-[var(--coral)] hover:bg-[var(--coral-deep)] text-white">
+        <Button size="sm" className="rounded-full px-5 bg-[var(--lime)] hover:bg-[var(--lime-deep)] text-[var(--ink)] font-bold">
           Get started
         </Button>
       </div>
@@ -48,7 +48,7 @@ export function MobileNav() {
           >
             Pricing
           </a>
-          <Button className="rounded-full bg-[var(--coral)] hover:bg-[var(--coral-deep)] text-white w-full">
+          <Button className="rounded-full bg-[var(--lime)] hover:bg-[var(--lime-deep)] text-[var(--ink)] font-bold w-full">
             Get started
           </Button>
         </div>

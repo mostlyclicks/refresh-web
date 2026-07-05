@@ -57,7 +57,7 @@ export function ContactModal({ open, initialPlan, onClose }: Props) {
     }
   }
 
-  const field = 'w-full px-4 py-3 rounded-xl text-sm text-[var(--ink)] placeholder-[var(--ink-soft)]/70 outline-none focus:ring-2 focus:ring-[var(--coral)]/40 bg-[var(--paper-deep)] border border-[var(--line)]'
+  const field = 'w-full px-4 py-3 rounded-xl text-sm text-[var(--ink)] placeholder-[var(--ink-soft)]/70 outline-none focus:ring-2 focus:ring-[var(--purple)]/50 bg-[var(--paper-deep)] border border-[var(--line)]'
 
   return (
     <div
@@ -76,18 +76,18 @@ export function ContactModal({ open, initialPlan, onClose }: Props) {
         {done ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-4">👋</div>
-            <h2 className="text-2xl mb-2 text-[var(--ink)]" style={{ fontFamily: 'var(--font-display)' }}>We&rsquo;ll be in touch!</h2>
+            <h2 className="text-2xl mb-2 text-[var(--ink)] font-display" >We&rsquo;ll be in touch!</h2>
             <p className="text-[var(--ink-soft)] text-sm">Thanks for reaching out — you&rsquo;ll hear back within 1 business day.</p>
             <Button
               onClick={onClose}
-              className="mt-6 rounded-full bg-[var(--coral)] hover:bg-[var(--coral-deep)] text-white px-8"
+              className="mt-6 rounded-full bg-[var(--lime)] hover:bg-[var(--lime-deep)] text-[var(--ink)] font-bold px-8"
             >
               Done
             </Button>
           </div>
         ) : (
           <>
-            <h2 className="text-2xl mb-1 text-[var(--ink)]" style={{ fontFamily: 'var(--font-display)' }}>Let&rsquo;s get started</h2>
+            <h2 className="text-2xl mb-1 text-[var(--ink)] font-display" >Let&rsquo;s get started</h2>
             <p className="text-[var(--ink-soft)] text-sm mb-6">Tell us about your business and we&rsquo;ll reach out within 1 business day.</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -139,7 +139,7 @@ export function ContactModal({ open, initialPlan, onClose }: Props) {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-[var(--coral)] hover:bg-[var(--coral-deep)] text-white py-3 disabled:opacity-50"
+                className="w-full rounded-full bg-[var(--lime)] hover:bg-[var(--lime-deep)] text-[var(--ink)] font-bold py-3 disabled:opacity-50"
               >
                 {loading ? 'Sending…' : 'Send inquiry'}
               </Button>

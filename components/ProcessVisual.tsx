@@ -16,7 +16,7 @@ const STEPS = [
   {
     label: "It's live",
     title: 'Your site updates itself',
-    desc: 'Approved changes deploy automatically — usually in under 30 seconds. You get a link the moment it’s done.',
+    desc: 'Approved changes deploy automatically — you get a confirmation with a link the moment it’s done.',
   },
 ] as const
 
@@ -46,7 +46,7 @@ export function ProcessVisual() {
       <div className="relative">
         <div className="absolute left-[15px] top-2 bottom-2 w-[2px] rounded-full bg-[var(--line)]" aria-hidden>
           <div
-            className="w-full rounded-full bg-[var(--coral)] transition-[height] duration-500 ease-out"
+            className="w-full rounded-full bg-[var(--purple)] transition-[height] duration-500 ease-out"
             style={{ height: `${(active / (STEPS.length - 1)) * 100}%` }}
           />
         </div>
@@ -56,16 +56,16 @@ export function ProcessVisual() {
               <div
                 className={`absolute left-0 top-0.5 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors duration-300 ${
                   i <= active
-                    ? 'bg-[var(--coral)] border-[var(--coral)] text-white'
+                    ? 'bg-[var(--purple)] border-[var(--purple)] text-white'
                     : 'bg-[var(--paper)] border-[var(--line)] text-[var(--ink-soft)]'
                 }`}
               >
                 {i + 1}
               </div>
-              <p className="text-xs font-bold tracking-[0.18em] uppercase mb-2 text-[var(--coral-deep)]">
+              <p className="text-xs font-bold tracking-[0.18em] uppercase mb-2 text-[var(--purple-deep)]">
                 {step.label}
               </p>
-              <h3 className="text-2xl mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-2xl mb-3 font-display">
                 {step.title}
               </h3>
               <p className="text-[var(--ink-soft)] leading-relaxed max-w-sm">{step.desc}</p>
@@ -84,7 +84,7 @@ export function ProcessVisual() {
 
 function BrowserMockup({ active }: { active: number }) {
   return (
-    <div className="rounded-2xl border border-[var(--line)] bg-white shadow-[0_30px_70px_-20px_rgba(36,28,19,0.28)] overflow-hidden">
+    <div className="rounded-2xl border border-[var(--line)] bg-white shadow-[0_30px_70px_-24px_rgba(32,37,45,0.25)] overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--line)] bg-[var(--paper-deep)]">
         <span className="w-2.5 h-2.5 rounded-full bg-[#FF6159]" />
         <span className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
@@ -98,7 +98,7 @@ function BrowserMockup({ active }: { active: number }) {
         {/* Step 0: chat request */}
         <Frame show={active === 0}>
           <p className="text-xs font-semibold text-[var(--ink-soft)] mb-3">Your message</p>
-          <div className="rounded-2xl rounded-tl-sm bg-[var(--coral-wash)] px-4 py-3 max-w-[85%] text-sm text-[var(--ink)] leading-relaxed">
+          <div className="rounded-2xl rounded-tl-sm bg-[var(--blue-wash)] px-4 py-3 max-w-[85%] text-sm text-[var(--ink)] leading-relaxed">
             Can you update our hours to 8am–6pm?
             <span className="inline-block w-[2px] h-4 align-middle ml-0.5 bg-[var(--ink)] animate-pulse" />
           </div>
@@ -110,11 +110,11 @@ function BrowserMockup({ active }: { active: number }) {
           <div className="rounded-xl border border-red-200 p-3 mb-2 text-sm line-through text-red-400 bg-red-50/70">
             Open 9am – 5pm
           </div>
-          <div className="rounded-xl border border-[var(--teal)]/25 p-3 mb-4 text-sm bg-[var(--teal-wash)] text-[var(--teal)] font-medium">
+          <div className="rounded-xl border border-[var(--lime-deep)] p-3 mb-4 text-sm bg-[var(--lime-wash)] text-[var(--ink)] font-medium">
             Open 8am – 6pm
           </div>
           <div className="flex gap-2">
-            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--teal)] text-white">✓ Approve</span>
+            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-[var(--lime)] text-[var(--ink)]">✓ Approve</span>
             <span className="px-3 py-1.5 rounded-full text-xs font-semibold border border-[var(--line)] text-[var(--ink-soft)]">Reject</span>
           </div>
         </Frame>
@@ -122,14 +122,14 @@ function BrowserMockup({ active }: { active: number }) {
         {/* Step 2: live */}
         <Frame show={active === 2}>
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-2 h-2 rounded-full bg-[var(--teal)] animate-pulse" />
-            <span className="text-xs font-bold tracking-wide uppercase text-[var(--teal)]">Live now</span>
+            <span className="w-2 h-2 rounded-full bg-[var(--lime-deep)] animate-pulse" />
+            <span className="text-xs font-bold tracking-wide uppercase text-[var(--lime-ink)]">Live now</span>
           </div>
           <div className="rounded-xl border border-[var(--line)] p-5 bg-[var(--paper)]">
             <p className="text-xs text-[var(--ink-soft)] mb-1">Hours</p>
             <p className="text-lg font-semibold text-[var(--ink)]">Open 8am – 6pm</p>
           </div>
-          <p className="text-xs text-[var(--ink-soft)] mt-4">Deployed 14 seconds ago ✨</p>
+          <p className="text-xs text-[var(--ink-soft)] mt-4">Deployed just now ✨</p>
         </Frame>
       </div>
     </div>

@@ -129,3 +129,11 @@
     scroll-behavior: smooth;
   }
 }
+
+@layer components {
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+}
