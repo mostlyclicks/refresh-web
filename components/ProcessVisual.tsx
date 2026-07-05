@@ -1,6 +1,17 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+
+// The section this lives in overrides the palette vars to dark values —
+// the mockup re-declares the light ones so its contents render as a real
+// light-mode browser window against the dark band.
+const lightVars: CSSProperties = {
+  ['--paper' as string]: '#FAFCF5',
+  ['--paper-deep' as string]: '#EFF3E4',
+  ['--ink' as string]: '#20252D',
+  ['--ink-soft' as string]: '#616876',
+  ['--line' as string]: 'rgba(32,37,45,0.12)',
+}
 
 const STEPS = [
   {
@@ -62,7 +73,7 @@ export function ProcessVisual() {
               >
                 {i + 1}
               </div>
-              <p className="text-xs font-bold tracking-[0.18em] uppercase mb-2 text-[var(--purple-deep)]">
+              <p className="text-xs font-bold tracking-[0.18em] uppercase mb-2 text-[var(--purple)]">
                 {step.label}
               </p>
               <h3 className="text-2xl mb-3 font-display">
@@ -84,7 +95,7 @@ export function ProcessVisual() {
 
 function BrowserMockup({ active }: { active: number }) {
   return (
-    <div className="rounded-2xl border border-[var(--line)] bg-white shadow-[0_30px_70px_-24px_rgba(32,37,45,0.25)] overflow-hidden">
+    <div className="rounded-2xl bg-white shadow-[0_30px_70px_-24px_rgba(0,0,0,0.55)] overflow-hidden" style={lightVars}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--line)] bg-[var(--paper-deep)]">
         <span className="w-2.5 h-2.5 rounded-full bg-[#FF6159]" />
         <span className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />

@@ -223,12 +223,33 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it works — scroll-driven process visual */}
-      <section id="how-it-works" className="px-6 py-24 md:py-32 border-t border-[var(--line)]">
-        <div className="max-w-6xl mx-auto">
+      {/* How it works — dark band with scroll-driven process visual */}
+      <section
+        id="how-it-works"
+        className="relative px-6 py-24 md:py-32 overflow-x-clip"
+        style={{
+          background: '#1D222D',
+          ['--ink' as string]: '#F5F7F2',
+          ['--ink-soft' as string]: '#A9B0BC',
+          ['--line' as string]: 'rgba(245,247,242,0.15)',
+          ['--paper' as string]: '#1D222D',
+        }}
+      >
+        {/* soft glows so the dark band keeps the energy palette */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(700px circle at 8% 0%, rgba(200,240,91,0.09), transparent 55%),
+              radial-gradient(700px circle at 95% 100%, rgba(167,149,246,0.13), transparent 55%)
+            `,
+          }}
+          aria-hidden
+        />
+        <div className="relative max-w-6xl mx-auto text-[var(--ink)]">
           <ScrollReveal>
             <div className="max-w-xl mb-16 md:mb-20">
-              <p className="text-xs font-bold tracking-[0.18em] uppercase mb-3 text-[var(--purple-deep)]">How it works</p>
+              <p className="text-xs font-bold tracking-[0.18em] uppercase mb-3 text-[var(--lime)]">How it works</p>
               <h2 className="text-3xl md:text-4xl mb-4 font-display">
                 Simple as sending a text.
               </h2>
@@ -240,7 +261,7 @@ export default function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="px-6 py-24 md:py-32 border-t border-[var(--line)]">
+      <section id="pricing" className="px-6 py-24 md:py-32">
         <div className="max-w-5xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-16">
