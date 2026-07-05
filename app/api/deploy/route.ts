@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { supabaseAdmin } from '@/lib/db'
+import { sendUpdateLiveEmail } from '@/lib/email'
 import { CodeChange } from '@/lib/types'
 import { Octokit } from '@octokit/rest'
 
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
     // Fetch suggestion + request + website
     const { data: suggestion, error: sugError } = await supabaseAdmin
       .from('suggestions')
-      .select('*, requests(*, websites(*))')
+      .select('*, requests(*, websites(*), clients(*))')
       .eq('id', suggestionId)
       .single()
 
@@ -114,6 +116,20 @@ export async function POST(req: NextRequest) {
       .from('requests')
       .update({ status: 'deployed' })
       .eq('id', suggestion.requests.id)
+
+    // Notify the client after the response is sent — sendUpdateLiveEmail
+    // never throws, so a mail problem can't affect the deploy result
+    const client = suggestion.requests?.clients
+    if (client?.email) {
+      after(async () => {
+        await sendUpdateLiveEmail({
+          to: client.email,
+          clientName: client.name ?? 'there',
+          summary: suggestion.claude_response?.request_summary ?? 'Your requested update',
+          siteUrl: website.deployed_url ?? null,
+        })
+      })
+    }
 
     return NextResponse.json({
       success: true,
