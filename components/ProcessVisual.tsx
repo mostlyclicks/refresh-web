@@ -1,17 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { energyTheme } from '@/lib/theme'
 
 // The section this lives in overrides the palette vars to dark values —
-// the mockup re-declares the light ones so its contents render as a real
-// light-mode browser window against the dark band.
-const lightVars: CSSProperties = {
-  ['--paper' as string]: '#FAFCF5',
-  ['--paper-deep' as string]: '#EFF3E4',
-  ['--ink' as string]: '#20252D',
-  ['--ink-soft' as string]: '#616876',
-  ['--line' as string]: 'rgba(32,37,45,0.12)',
-}
+// the mockup re-declares the full light theme so its contents render as a
+// real light-mode browser window against the dark band.
+const lightVars = energyTheme
 
 const STEPS = [
   {

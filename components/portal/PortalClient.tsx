@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Button } from '@/components/ui/button'
 import { Client, Website, Request, RequestStatus, Attachment } from '@/lib/types'
+import { energyTheme } from '@/lib/theme'
 
-const statusConfig: Record<RequestStatus, { label: string; icon: string; className: string }> = {
-  pending:  { label: 'Under review',       icon: '🕐', className: 'text-yellow-400' },
-  approved: { label: 'Approved',           icon: '✓',  className: 'text-blue-400' },
-  deployed: { label: 'Live on your site',  icon: '✓',  className: 'text-emerald-400' },
-  rejected: { label: 'Needs more info',    icon: '↩',  className: 'text-slate-400' },
+const statusConfig: Record<RequestStatus, { label: string; icon: string; color: string }> = {
+  pending:  { label: 'Under review',       icon: '🕐', color: '#946200' },
+  approved: { label: 'Approved',           icon: '✓',  color: 'var(--purple-deep)' },
+  deployed: { label: 'Live on your site',  icon: '✓',  color: 'var(--lime-ink)' },
+  rejected: { label: 'Needs more info',    icon: '↩',  color: 'var(--ink-soft)' },
 }
 
 function formatDate(iso: string) {
@@ -31,14 +31,14 @@ function formatBytes(bytes: number) {
 function FileIcon({ type }: { type: string }) {
   if (type === 'application/pdf') {
     return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#C0503F' }}>
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
         <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
       </svg>
     )
   }
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--blue-deep)' }}>
       <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
       <polyline points="21 15 16 10 5 21"/>
     </svg>
@@ -171,7 +171,6 @@ export default function PortalClient({ client, website, initialRequests }: Props
     }
   }
 
-  // Auto-resize textarea
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value)
   }
@@ -184,18 +183,21 @@ export default function PortalClient({ client, website, initialRequests }: Props
   const chatMessages = [...requests].reverse()
 
   return (
-    <div className="flex flex-col bg-[#0F172A] text-white" style={{ minHeight: '100dvh' }}>
+    <div
+      className="flex flex-col bg-[var(--paper)] text-[var(--ink)]"
+      style={{ minHeight: '100dvh', ...energyTheme }}
+    >
 
       {/* Header */}
-      <header className="sticky top-0 z-10 shrink-0 border-b border-white/10 px-4 py-3 bg-[#0F172A]">
+      <header className="sticky top-0 z-10 shrink-0 border-b border-[var(--line)] px-4 py-3 bg-[var(--paper)]">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <span className="text-base font-bold">
-            Refresh<span className="text-[#3B82F6]">Web</span>
+          <span className="text-base font-display">
+            Refresh<span className="text-[var(--purple-deep)]">Web</span>
           </span>
           <div className="text-right">
             <p className="text-sm font-medium leading-tight">{client.name}</p>
             {website.deployed_url && (
-              <p className="text-xs text-slate-500 truncate max-w-[160px]">
+              <p className="text-xs text-[var(--ink-soft)] truncate max-w-[160px]">
                 {website.deployed_url.replace('https://', '')}
               </p>
             )}
@@ -211,16 +213,16 @@ export default function PortalClient({ client, website, initialRequests }: Props
 
           {/* Mobile site status strip */}
           {website.deployed_url && (
-            <div className="lg:hidden shrink-0 flex items-center justify-between px-4 py-2.5" style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="lg:hidden shrink-0 flex items-center justify-between px-4 py-2.5 bg-[var(--paper-deep)] border-b border-[var(--line)]">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-                <span className="text-xs text-slate-400 truncate">{website.deployed_url.replace('https://', '')}</span>
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--lime-ink)' }}></span>
+                <span className="text-xs text-[var(--ink-soft)] truncate">{website.deployed_url.replace('https://', '')}</span>
               </div>
               <a
                 href={website.deployed_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-[#3B82F6] hover:text-blue-400 transition-colors shrink-0 ml-3 min-h-[44px] flex items-center"
+                className="text-xs font-semibold text-[var(--purple-deep)] hover:opacity-70 transition-opacity shrink-0 ml-3 min-h-[44px] flex items-center"
               >
                 View site →
               </a>
@@ -228,34 +230,31 @@ export default function PortalClient({ client, website, initialRequests }: Props
           )}
 
           {/* ── Input area ── */}
-          <div
-            className="shrink-0 border-b border-white/10 bg-[#0F172A]"
-          >
+          <div className="shrink-0 border-b border-[var(--line)] bg-[var(--paper)]">
             {/* Staged files preview */}
             {stagedFiles.length > 0 && (
               <div className="px-3 pt-3 space-y-1.5">
                 {stagedFiles.map((sf, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--paper-deep)] border border-[var(--line)]"
                   >
                     {sf.previewUrl ? (
                       <img src={sf.previewUrl} alt={sf.file.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
                     ) : (
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-white">
                         <FileIcon type={sf.file.type} />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-200 truncate">{sf.file.name}</p>
-                      <p className="text-xs text-slate-500">{formatBytes(sf.file.size)}</p>
+                      <p className="text-sm text-[var(--ink)] truncate">{sf.file.name}</p>
+                      <p className="text-xs text-[var(--ink-soft)]">{formatBytes(sf.file.size)}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeFile(i)}
                       disabled={submitting}
-                      className="text-slate-600 hover:text-red-400 transition-colors shrink-0 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+                      className="text-[var(--ink-soft)] hover:text-red-500 transition-colors shrink-0 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -267,7 +266,7 @@ export default function PortalClient({ client, website, initialRequests }: Props
             )}
 
             {uploadProgress && (
-              <p className="px-4 pt-2 text-xs text-slate-500">{uploadProgress}</p>
+              <p className="px-4 pt-2 text-xs text-[var(--ink-soft)]">{uploadProgress}</p>
             )}
 
             {/* Input row */}
@@ -288,7 +287,7 @@ export default function PortalClient({ client, website, initialRequests }: Props
                   onClick={() => fileInputRef.current?.click()}
                   disabled={submitting}
                   title="Attach files"
-                  className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-40"
+                  className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--paper-deep)] transition-colors cursor-pointer disabled:opacity-40"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
@@ -309,14 +308,14 @@ export default function PortalClient({ client, website, initialRequests }: Props
                       if (message.trim() && !submitting) handleSubmit(e as any)
                     }
                   }}
-                  className="flex-1 bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm rounded-2xl px-4 py-2.5 outline-none focus:border-[#3B82F6] resize-none transition-colors disabled:opacity-60"
+                  className="flex-1 bg-[var(--paper-deep)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--ink-soft)] text-sm rounded-2xl px-4 py-2.5 outline-none focus:border-[var(--purple)] resize-none transition-colors disabled:opacity-60"
                 />
 
                 {/* Send button */}
                 <button
                   type="submit"
                   disabled={submitting || !message.trim()}
-                  className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-[#3B82F6] hover:bg-blue-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-[var(--lime)] hover:bg-[var(--lime-deep)] text-[var(--ink)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {submitting ? (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
@@ -331,7 +330,7 @@ export default function PortalClient({ client, website, initialRequests }: Props
                 </button>
               </div>
 
-              {error && <p className="text-red-400 text-xs px-4 pb-2">⚠ {error}</p>}
+              {error && <p className="text-red-600 text-xs px-4 pb-2">⚠ {error}</p>}
             </form>
           </div>
 
@@ -339,7 +338,7 @@ export default function PortalClient({ client, website, initialRequests }: Props
           <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
             {/* Welcome */}
             <div className="text-center mb-2">
-              <div className="inline-block px-4 py-2 rounded-full text-xs text-slate-500" style={{ background: 'rgba(255,255,255,0.04)' }}>
+              <div className="inline-block px-4 py-2 rounded-full text-xs text-[var(--ink-soft)] bg-[var(--paper-deep)]">
                 Your request history is below.
               </div>
             </div>
@@ -347,13 +346,13 @@ export default function PortalClient({ client, website, initialRequests }: Props
             {/* Empty state */}
             {chatMessages.length === 0 && (
               <div className="text-center py-12">
-                <div className="w-12 h-12 rounded-2xl bg-[#3B82F6]/10 flex items-center justify-center mx-auto mb-4">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--purple-wash)' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--purple-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
                   </svg>
                 </div>
-                <p className="text-slate-400 text-sm font-medium">No requests yet</p>
-                <p className="text-slate-600 text-xs mt-1">Send your first request below.</p>
+                <p className="text-[var(--ink)] text-sm font-medium">No requests yet</p>
+                <p className="text-[var(--ink-soft)] text-xs mt-1">Send your first request below.</p>
               </div>
             )}
 
@@ -363,19 +362,16 @@ export default function PortalClient({ client, website, initialRequests }: Props
               return (
                 <div key={req.id} className="flex flex-col max-w-[85%] sm:max-w-[75%]">
                   {/* Message bubble */}
-                  <div
-                    className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-slate-100 leading-relaxed"
-                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  >
+                  <div className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-[var(--ink)] leading-relaxed bg-[var(--paper-deep)] border border-[var(--line)]">
                     {req.message_text}
 
                     {/* Attachments inside bubble */}
                     {req.attachments?.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[var(--line)]">
                         {req.attachments.map((att, i) => (
                           att.type.startsWith('image/') ? (
                             <a key={i} href={att.url} target="_blank" rel="noopener noreferrer">
-                              <img src={att.url} alt={att.name} className="h-14 w-14 rounded-lg object-cover border border-white/10 hover:opacity-80 transition-opacity" />
+                              <img src={att.url} alt={att.name} className="h-14 w-14 rounded-lg object-cover border border-[var(--line)] hover:opacity-80 transition-opacity" />
                             </a>
                           ) : (
                             <a
@@ -383,8 +379,7 @@ export default function PortalClient({ client, website, initialRequests }: Props
                               href={att.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white transition-colors"
-                              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-[var(--ink)] hover:opacity-70 transition-opacity bg-white border border-[var(--line)]"
                             >
                               <FileIcon type={att.type} />
                               {att.name}
@@ -397,10 +392,10 @@ export default function PortalClient({ client, website, initialRequests }: Props
 
                   {/* Status + timestamp below bubble */}
                   <div className="flex items-center gap-2 mt-1.5 ml-1">
-                    <span className={`text-[11px] font-medium ${status.className}`}>
+                    <span className="text-[11px] font-semibold" style={{ color: status.color }}>
                       {status.icon} {status.label}
                     </span>
-                    <span className="text-[11px] text-slate-600">{formatDate(req.created_at)}</span>
+                    <span className="text-[11px] text-[var(--ink-soft)]">{formatDate(req.created_at)}</span>
                   </div>
                 </div>
               )
@@ -414,14 +409,11 @@ export default function PortalClient({ client, website, initialRequests }: Props
 
         {/* ── Desktop sidebar: site preview ── */}
         {website.deployed_url && (
-          <div className="hidden lg:block w-[340px] shrink-0 p-6 sticky top-[57px] self-start"
-            style={{ borderLeft: '1px solid rgba(255,255,255,0.07)', maxHeight: 'calc(100dvh - 57px)', overflowY: 'auto' }}>
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
+          <div className="hidden lg:block w-[340px] shrink-0 p-6 sticky top-[57px] self-start border-l border-[var(--line)]"
+            style={{ maxHeight: 'calc(100dvh - 57px)', overflowY: 'auto' }}>
+            <div className="rounded-2xl overflow-hidden bg-white border border-[var(--line)] shadow-[0_20px_50px_-20px_rgba(32,37,45,0.18)]">
               {/* Screenshot */}
-              <div className="relative w-full aspect-[4/3] bg-slate-900 overflow-hidden">
+              <div className="relative w-full aspect-[4/3] bg-[var(--paper-deep)] overflow-hidden">
                 {screenshotUrl && (
                   <img
                     src={screenshotUrl}
@@ -431,14 +423,14 @@ export default function PortalClient({ client, website, initialRequests }: Props
                   />
                 )}
                 <div className="absolute inset-x-0 bottom-0 h-12 pointer-events-none"
-                  style={{ background: 'linear-gradient(to bottom, transparent, rgba(15,23,42,0.8))' }} />
+                  style={{ background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.85))' }} />
               </div>
 
               {/* Site info */}
               <div className="px-5 py-4 space-y-4">
                 <div>
-                  <p className="font-semibold text-white text-sm">{client.name}</p>
-                  <p className="text-xs text-slate-500 truncate mt-0.5">
+                  <p className="font-semibold text-[var(--ink)] text-sm">{client.name}</p>
+                  <p className="text-xs text-[var(--ink-soft)] truncate mt-0.5">
                     {website.deployed_url.replace('https://', '')}
                   </p>
                 </div>
@@ -447,10 +439,8 @@ export default function PortalClient({ client, website, initialRequests }: Props
                   href={website.deployed_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-medium text-white transition-colors"
-                  style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.25)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.15)')}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                  style={{ background: 'var(--purple-wash)', color: 'var(--purple-deep)' }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
@@ -464,16 +454,16 @@ export default function PortalClient({ client, website, initialRequests }: Props
             {/* Recent activity */}
             {requests.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Recent Activity</h3>
+                <h3 className="text-xs font-semibold text-[var(--ink-soft)] uppercase tracking-widest mb-3">Recent Activity</h3>
                 <div className="space-y-2">
                   {requests.slice(0, 5).map((req) => {
                     const s = statusConfig[req.status]
                     return (
                       <div key={req.id} className="flex items-start gap-2">
-                        <span className={`text-[11px] mt-0.5 ${s.className}`}>{s.icon}</span>
+                        <span className="text-[11px] mt-0.5" style={{ color: s.color }}>{s.icon}</span>
                         <div className="min-w-0">
-                          <p className="text-xs text-slate-400 truncate">{req.message_text}</p>
-                          <p className="text-[11px] text-slate-600 mt-0.5">{formatDate(req.created_at)}</p>
+                          <p className="text-xs text-[var(--ink)] truncate">{req.message_text}</p>
+                          <p className="text-[11px] text-[var(--ink-soft)] mt-0.5">{formatDate(req.created_at)}</p>
                         </div>
                       </div>
                     )

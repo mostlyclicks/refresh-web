@@ -1,28 +1,12 @@
 'use client'
 
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollReveal } from '@/components/ScrollReveal'
 import { MobileNav } from '@/components/MobileNav'
 import { ContactModal } from '@/components/ContactModal'
 import { ProcessVisual } from '@/components/ProcessVisual'
-
-const theme: CSSProperties = {
-  ['--paper' as string]: '#FAFCF5',
-  ['--paper-deep' as string]: '#EFF3E4',
-  ['--ink' as string]: '#20252D',
-  ['--ink-soft' as string]: '#616876',
-  ['--lime' as string]: '#C8F05B',
-  ['--lime-deep' as string]: '#B1E23A',
-  ['--lime-wash' as string]: '#EDFACD',
-  ['--lime-ink' as string]: '#517E00',
-  ['--purple' as string]: '#A795F6',
-  ['--purple-deep' as string]: '#7C66E3',
-  ['--purple-wash' as string]: '#ECE8FD',
-  ['--blue' as string]: '#7DB9F0',
-  ['--blue-wash' as string]: '#E3F0FC',
-  ['--line' as string]: 'rgba(32,37,45,0.12)',
-}
+import { energyTheme } from '@/lib/theme'
 
 function Squiggle({ drawn }: { drawn: boolean }) {
   return (
@@ -132,7 +116,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-[var(--paper)] text-[var(--ink)]" style={theme}>
+    <div className="min-h-screen overflow-x-clip bg-[var(--paper)] text-[var(--ink)]" style={energyTheme}>
       {/* Atmosphere */}
       <div
         className="pointer-events-none fixed inset-0 -z-10"
