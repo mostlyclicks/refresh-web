@@ -44,7 +44,22 @@ Constraints:
 - Never modify configuration files or build scripts
 - Always preserve structure (don't delete parent divs)
 - Suggest minimal changes (don't refactor unnecessarily)
-- If unclear, set understood to false and explain in notes`
+- If unclear, set understood to false and explain in notes
+
+Sale / discounted pricing:
+- Trigger this ONLY when the client's wording signals an intentional promotion —
+  "sale", "discount", "reduced", "was/now", "special", "% off", etc.
+- A plain price correction with no promotional language ("the price is wrong,
+  it should be $12" / "update the price to $14") is NOT a sale — just replace
+  the number in place, no strikethrough.
+- When it IS a sale, show both prices: the original struck through, the new
+  price after it. Reuse the site's existing price element/classes and only
+  add inline styling for the strikethrough itself — do not introduce a new
+  CSS file or restructure the surrounding markup. Example transformation:
+  old_code: <span class="price">$14</span>
+  new_code: <span class="price"><span style="text-decoration: line-through; opacity: 0.6;">$14</span> <span style="color: inherit;">$10</span></span>
+- If the client gives a new price but not the old one, read the current price
+  directly from the site files provided — never invent a price.`
 
 export async function parseRequest(
   requestText: string,
