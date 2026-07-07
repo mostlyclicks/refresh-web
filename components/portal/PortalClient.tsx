@@ -65,12 +65,13 @@ export default function PortalClient({ client, website, initialRequests }: Props
   const [uploadProgress, setUploadProgress] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Auto-scroll to newest message
+  // Newest request is shown first — keep the list scrolled to the top so it's
+  // visible without scrolling whenever a new request comes in.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    messagesContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }, [requests])
 
   // Poll for status updates on pending/approved requests
@@ -179,8 +180,8 @@ export default function PortalClient({ client, website, initialRequests }: Props
     ? `https://s0.wp.com/mshots/v1/${encodeURIComponent(website.deployed_url)}?w=800&h=600`
     : null
 
-  // Display oldest first (chat convention) — requests state is newest-first
-  const chatMessages = [...requests].reverse()
+  // Newest first — requests state already comes back newest-first from the API
+  const chatMessages = requests
 
   return (
     <div
@@ -308,7 +309,7 @@ export default function PortalClient({ client, website, initialRequests }: Props
                       if (message.trim() && !submitting) handleSubmit(e as any)
                     }
                   }}
-                  className="flex-1 bg-[var(--paper-deep)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--ink-soft)] text-sm rounded-2xl px-4 py-2.5 outline-none focus:border-[var(--purple)] resize-none transition-colors disabled:opacity-60"
+                  className="flex-1 bg-[var(--paper-deep)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--ink-soft)] text-base rounded-2xl px-4 py-2.5 outline-none focus:border-[var(--purple)] resize-none transition-colors disabled:opacity-60"
                 />
 
                 {/* Send button */}
@@ -335,7 +336,7 @@ export default function PortalClient({ client, website, initialRequests }: Props
           </div>
 
           {/* Messages scroll area */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
             {/* Welcome */}
             <div className="text-center mb-2">
               <div className="inline-block px-4 py-2 rounded-full text-xs text-[var(--ink-soft)] bg-[var(--paper-deep)]">
@@ -400,9 +401,6 @@ export default function PortalClient({ client, website, initialRequests }: Props
                 </div>
               )
             })}
-
-            {/* Scroll anchor */}
-            <div ref={messagesEndRef} />
           </div>
 
         </div>
