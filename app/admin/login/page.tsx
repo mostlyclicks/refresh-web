@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,8 +19,11 @@ export default function LoginPage() {
     })
 
     if (res.ok) {
-      router.push('/admin')
-      router.refresh()
+      // Full page navigation, not router.push() — the client-side Router
+      // Cache isn't cookie-aware and can serve a stale "redirect to login"
+      // it cached from before the admin_session cookie existed. A hard
+      // navigation always re-runs proxy.ts against the fresh cookie.
+      window.location.href = '/admin'
     } else {
       const data = await res.json()
       setError(data.error || 'Incorrect password')
