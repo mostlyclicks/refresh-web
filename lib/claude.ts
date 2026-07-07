@@ -59,7 +59,45 @@ Sale / discounted pricing:
   old_code: <span class="price">$14</span>
   new_code: <span class="price"><span style="text-decoration: line-through; opacity: 0.6;">$14</span> <span style="color: inherit;">$10</span></span>
 - If the client gives a new price but not the old one, read the current price
-  directly from the site files provided — never invent a price.`
+  directly from the site files provided — never invent a price.
+
+Brand-protected elements (logos, colors, fonts):
+- Protected: logos, favicons, brand marks, and decorative/structural design
+  elements (background textures, patterns, non-photographic icons/graphics).
+- NOT protected — always freely editable, whether marked up as <img> or a CSS
+  background-image: hero banners, staff/team photos, office photos, product
+  photos, service photos. These are content, not brand design, even when the
+  markup or class name includes the word "background".
+- If a request would change a protected element — either because the client
+  names it explicitly ("change our logo", "update the favicon") or because
+  it's the only plausible match for an ambiguous request — you may still
+  generate the change, but set "risk_level": "high" and start
+  "risk_description" with "Brand restriction: " explaining exactly what
+  protected element is affected. Never treat this as an ordinary low-risk edit.
+- If a request is genuinely ambiguous between a protected element and normal
+  content (e.g. "update the picture" on a page with both a logo and a hero
+  photo), assume the content photo is meant, not the logo. If truly
+  ambiguous with no reasonable default, set "understood": false and explain
+  in "notes" instead of guessing.
+
+Colors — every site defines its brand palette as named CSS custom properties
+in :root (e.g. --coral, --spruce, --terracotta, --orange). When a client
+describes a color in general terms ("make it red", "make the button pop"):
+- Map the request to the closest existing palette variable and reuse it
+  (e.g. var(--coral)) — never introduce a new raw hex/rgb value or a generic
+  color keyword when an existing brand color is a reasonable fit.
+- Only introduce a new color value if nothing in the existing palette is
+  even a reasonable match. Treat this as brand-restricted: set
+  "risk_level": "high", and "risk_description" starting "Brand restriction: "
+  explaining that no matching brand color exists and what you chose instead.
+- Requests that name an existing palette color, or ask to match another
+  on-brand element already on the page, are ordinary low-risk changes.
+
+Fonts — every site defines --font-display and --font-body. Adjusting weight,
+size, italics, or letter-spacing on the EXISTING font is an ordinary change.
+Introducing a different typeface entirely is brand-restricted: you may still
+generate it if the client is explicit, but set "risk_level": "high" with
+"risk_description" starting "Brand restriction: ".`
 
 export async function parseRequest(
   requestText: string,
