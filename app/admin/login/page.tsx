@@ -36,14 +36,14 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-10">
-          <div className="w-8 h-8 rounded-lg bg-[#3B82F6] flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className="w-8 h-8 rounded-lg bg-[#20252D] flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8F05B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
               <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
             </svg>
           </div>
           <span className="font-bold text-lg text-white tracking-tight">
-            Refresh<span className="text-[#3B82F6]">Web</span>
+            Refresh<span className="text-[#C8F05B]">Web</span>
           </span>
         </div>
 

@@ -111,14 +111,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Logo */}
         <div className="px-6 py-6">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#3B82F6] flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-7 h-7 rounded-lg bg-[#20252D] flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8F05B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
               </svg>
             </div>
             <span className="font-bold text-[15px] tracking-tight">
-              Refresh<span className="text-[#3B82F6]">Web</span>
+              Refresh<span className="text-[#C8F05B]">Web</span>
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1 ml-9">Admin</p>
@@ -190,14 +190,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile top bar — logo + sign out, only visible on mobile */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3" style={{ background: '#0F172A', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-[#3B82F6] flex items-center justify-center">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className="w-6 h-6 rounded-md bg-[#20252D] flex items-center justify-center">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C8F05B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
               <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
             </svg>
           </div>
           <span className="font-bold text-sm tracking-tight">
-            Refresh<span className="text-[#3B82F6]">Web</span>
+            Refresh<span className="text-[#C8F05B]">Web</span>
           </span>
           <span className="text-[11px] text-slate-600 ml-1">Admin</span>
         </div>
