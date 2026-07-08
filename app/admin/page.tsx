@@ -56,7 +56,7 @@ export default async function AdminOverviewPage() {
     supabaseAdmin
       .from('clients')
       .select(
-        'id, name, tier, created_at, websites(name, deployed_url), requests(id, status, created_at, suggestions(input_tokens, output_tokens, created_at))'
+        'id, name, tier, created_at, websites(name, deployed_url), requests(id, status, created_at, suggestions(claude_response, created_at))'
       )
       .order('name'),
     supabaseAdmin
@@ -118,13 +118,16 @@ export default async function AdminOverviewPage() {
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null
     const website = (client.websites as any[])?.[0] ?? null
     const vercelUrl = (website?.deployed_url as string | null) ?? null
-    const tokenTotal = requests.reduce((sum, req) => {
+    // Activity = count of distinct asks Claude parsed out of each request
+    // (a single message can bundle several changes), not raw token spend.
+    const activityCount = requests.reduce((sum, req) => {
       const suggestions: any[] = req.suggestions ?? []
-      const reqTokens = suggestions.reduce((s, sug) => {
+      const reqAsks = suggestions.reduce((s, sug) => {
         if (new Date(sug.created_at) < windowStart) return s
-        return s + (sug.input_tokens ?? 0) + (sug.output_tokens ?? 0)
+        const changeCount = sug.claude_response?.changes?.length ?? 0
+        return s + changeCount
       }, 0)
-      return sum + reqTokens
+      return sum + reqAsks
     }, 0)
     return {
       id: client.id as string,
@@ -136,7 +139,7 @@ export default async function AdminOverviewPage() {
       pendingCount: pending,
       totalRequests: requests.length,
       lastUpdate: last,
-      tokenUsage: tokenTotal,
+      activityCount,
     }
   })
 

@@ -16,7 +16,7 @@ export interface ClientCardData {
   pendingCount: number
   totalRequests: number
   lastUpdate: string | null
-  tokenUsage: number
+  activityCount: number
 }
 
 export interface TierInfo {
@@ -65,11 +65,22 @@ function sortCards(cards: ClientCardData[], sort: SortOption): ClientCardData[] 
   })
 }
 
-// Green (low usage) → yellow (mid) → red (high), scaled by this client's
-// share of the highest-usage client in the current window.
-function usageColor(ratio: number) {
-  const hue = 120 * (1 - Math.min(Math.max(ratio, 0), 1))
-  return `hsl(${hue}, 70%, 50%)`
+// Fixed scale, not relative to other clients: at or below GREEN_MAX asks is
+// pure green, at or above RED_MIN is pure red, interpolated in between —
+// a card's color means the same thing on every visit, regardless of how
+// busy other clients are.
+const ACTIVITY_GREEN_MAX = 3
+const ACTIVITY_RED_MIN = 8
+
+function usageColor(count: number) {
+  if (count <= ACTIVITY_GREEN_MAX) return 'hsl(120, 70%, 50%)'
+  if (count >= ACTIVITY_RED_MIN) return 'hsl(0, 70%, 50%)'
+  const t = (count - ACTIVITY_GREEN_MAX) / (ACTIVITY_RED_MIN - ACTIVITY_GREEN_MAX)
+  return `hsl(${120 * (1 - t)}, 70%, 50%)`
+}
+
+function usageWidthPct(count: number) {
+  return Math.min((count / ACTIVITY_RED_MIN) * 100, 100)
 }
 
 function formatDate(iso: string) {
@@ -91,7 +102,6 @@ interface Props {
 export default function ClientCards({ cards, tierConfig }: Props) {
   const [sort, setSort] = useState<SortOption>('name')
   const sorted = sortCards(cards, sort)
-  const maxTokenUsage = Math.max(...cards.map((c) => c.tokenUsage), 0)
 
   return (
     <div className="mb-10">
@@ -195,19 +205,21 @@ export default function ClientCards({ cards, tierConfig }: Props) {
                   </div>
                 </div>
 
-                {/* Token usage — last 30 days, relative to the busiest client */}
+                {/* Activity — count of distinct asks (not raw tokens) over the last 30 days */}
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] text-slate-500">Tokens (30d)</span>
-                    <span className="text-[11px] text-slate-400">{client.tokenUsage.toLocaleString('en-US')}</span>
+                    <span className="text-[11px] text-slate-500">Activity (30d)</span>
+                    <span className="text-[11px] text-slate-400">
+                      {client.activityCount} ask{client.activityCount !== 1 ? 's' : ''}
+                    </span>
                   </div>
                   <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                    {client.tokenUsage > 0 && (
+                    {client.activityCount > 0 && (
                       <div
                         className="h-full rounded-full"
                         style={{
-                          width: `${Math.max((client.tokenUsage / maxTokenUsage) * 100, 3)}%`,
-                          background: usageColor(client.tokenUsage / maxTokenUsage),
+                          width: `${Math.max(usageWidthPct(client.activityCount), 3)}%`,
+                          background: usageColor(client.activityCount),
                         }}
                       />
                     )}
