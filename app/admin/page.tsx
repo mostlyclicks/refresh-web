@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/db'
 import { RequestStatus, ClientTier } from '@/lib/types'
 import ClientCards from '@/components/admin/ClientCards'
+import TokenUsageChart, { TokenUsageDay } from '@/components/admin/TokenUsageChart'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +27,9 @@ function formatDate(iso: string) {
 export default async function AdminOverviewPage() {
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  const windowDays = 30
+  const windowStart = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000)
+  windowStart.setUTCHours(0, 0, 0, 0)
 
   const [
     { count: totalClients },
@@ -34,7 +38,7 @@ export default async function AdminOverviewPage() {
     { count: totalRequests },
     { data: recentRequests },
     { data: rawClients },
-    { data: monthTokenRows },
+    { data: windowTokenRows },
   ] = await Promise.all([
     supabaseAdmin.from('clients').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -55,14 +59,14 @@ export default async function AdminOverviewPage() {
       .order('name'),
     supabaseAdmin
       .from('suggestions')
-      .select('input_tokens, output_tokens')
-      .gte('created_at', startOfMonth),
+      .select('created_at, input_tokens, output_tokens')
+      .gte('created_at', windowStart.toISOString()),
   ])
 
   // Claude Haiku 4.5 pricing: $1.00 / MTok input, $5.00 / MTok output.
   const HAIKU_INPUT_PER_MTOK = 1.0
   const HAIKU_OUTPUT_PER_MTOK = 5.0
-  const tokenTotals = (monthTokenRows ?? []).reduce(
+  const tokenTotals = (windowTokenRows ?? []).reduce(
     (acc, row: any) => {
       acc.input += row.input_tokens ?? 0
       acc.output += row.output_tokens ?? 0
@@ -73,6 +77,30 @@ export default async function AdminOverviewPage() {
   const estimatedCost =
     (tokenTotals.input / 1_000_000) * HAIKU_INPUT_PER_MTOK +
     (tokenTotals.output / 1_000_000) * HAIKU_OUTPUT_PER_MTOK
+
+  // Daily buckets for the trend chart — always show the full window, zero-filled.
+  const dailyBuckets = new Map<string, { input: number; output: number }>()
+  for (let i = windowDays - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
+    const key = d.toISOString().slice(0, 10)
+    dailyBuckets.set(key, { input: 0, output: 0 })
+  }
+  for (const row of (windowTokenRows ?? []) as any[]) {
+    const key = (row.created_at as string).slice(0, 10)
+    const bucket = dailyBuckets.get(key)
+    if (bucket) {
+      bucket.input += row.input_tokens ?? 0
+      bucket.output += row.output_tokens ?? 0
+    }
+  }
+  const tokenChartData: TokenUsageDay[] = Array.from(dailyBuckets.entries()).map(([key, v]) => {
+    const d = new Date(key + 'T00:00:00Z')
+    return {
+      date: d.toLocaleString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+      input: v.input,
+      output: v.output,
+    }
+  })
 
   const tierConfig: Record<ClientTier, { label: string; className: string }> = {
     basic:        { label: 'Basic',        className: 'text-slate-400 bg-white/5' },
@@ -191,27 +219,30 @@ export default async function AdminOverviewPage() {
 
       {/* AI token usage */}
       <div
-        className="rounded-2xl px-5 py-4 mb-8 md:mb-10 flex flex-wrap items-center gap-x-8 gap-y-3"
+        className="rounded-2xl px-5 py-4 mb-8 md:mb-10"
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <div>
-          <p className="text-xs text-slate-500 mb-0.5">Claude tokens this month</p>
-          <p className="text-lg font-semibold text-white">
-            {(tokenTotals.input + tokenTotals.output).toLocaleString('en-US')}
-          </p>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3 mb-4">
+          <div>
+            <p className="text-xs text-slate-500 mb-0.5">Claude tokens — last {windowDays} days</p>
+            <p className="text-lg font-semibold text-white">
+              {(tokenTotals.input + tokenTotals.output).toLocaleString('en-US')}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 mb-0.5">Input / output</p>
+            <p className="text-sm text-slate-300">
+              {tokenTotals.input.toLocaleString('en-US')} / {tokenTotals.output.toLocaleString('en-US')}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 mb-0.5">Estimated cost (Haiku 4.5)</p>
+            <p className="text-lg font-semibold text-white">
+              ${estimatedCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-xs text-slate-500 mb-0.5">Input / output</p>
-          <p className="text-sm text-slate-300">
-            {tokenTotals.input.toLocaleString('en-US')} / {tokenTotals.output.toLocaleString('en-US')}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-slate-500 mb-0.5">Estimated cost (Haiku 4.5)</p>
-          <p className="text-lg font-semibold text-white">
-            ${estimatedCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-          </p>
-        </div>
+        <TokenUsageChart data={tokenChartData} />
       </div>
 
       {/* Client cards */}
