@@ -16,6 +16,7 @@ export interface ClientCardData {
   pendingCount: number
   totalRequests: number
   lastUpdate: string | null
+  tokenUsage: number
 }
 
 export interface TierInfo {
@@ -64,6 +65,13 @@ function sortCards(cards: ClientCardData[], sort: SortOption): ClientCardData[] 
   })
 }
 
+// Green (low usage) → yellow (mid) → red (high), scaled by this client's
+// share of the highest-usage client in the current window.
+function usageColor(ratio: number) {
+  const hue = 120 * (1 - Math.min(Math.max(ratio, 0), 1))
+  return `hsl(${hue}, 70%, 50%)`
+}
+
 function formatDate(iso: string) {
   const d = new Date(iso)
   const month = d.toLocaleString('en-US', { month: 'short' })
@@ -83,6 +91,7 @@ interface Props {
 export default function ClientCards({ cards, tierConfig }: Props) {
   const [sort, setSort] = useState<SortOption>('name')
   const sorted = sortCards(cards, sort)
+  const maxTokenUsage = Math.max(...cards.map((c) => c.tokenUsage), 0)
 
   return (
     <div className="mb-10">
@@ -182,6 +191,25 @@ export default function ClientCards({ cards, tierConfig }: Props) {
                           <line x1="10" y1="14" x2="21" y2="3"/>
                         </svg>
                       </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Token usage — last 30 days, relative to the busiest client */}
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] text-slate-500">Tokens (30d)</span>
+                    <span className="text-[11px] text-slate-400">{client.tokenUsage.toLocaleString('en-US')}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    {client.tokenUsage > 0 && (
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.max((client.tokenUsage / maxTokenUsage) * 100, 3)}%`,
+                          background: usageColor(client.tokenUsage / maxTokenUsage),
+                        }}
+                      />
                     )}
                   </div>
                 </div>
