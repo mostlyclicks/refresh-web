@@ -109,11 +109,21 @@ Introducing a different typeface entirely is brand-restricted: you may still
 generate it if the client is explicit, but set "risk_level": "high" with
 "risk_description" starting "Brand restriction: ".`
 
+export interface TokenUsage {
+  input_tokens: number
+  output_tokens: number
+}
+
+export interface ParsedRequest {
+  suggestion: ClaudeResponse
+  usage: TokenUsage
+}
+
 export async function parseRequest(
   requestText: string,
   siteFiles: Record<string, string>,
   attachments: { url: string; name: string; type: string }[] = []
-): Promise<ClaudeResponse> {
+): Promise<ParsedRequest> {
   const attachmentSection = attachments.length > 0
     ? `\nAttached files (use these exact URLs in new_code when referencing uploaded media):\n${attachments.map(a => `- ${a.name}: ${a.url}`).join('\n')}\n`
     : ''
@@ -160,5 +170,11 @@ Analyze this request and return the JSON response.`,
 
   if (!Array.isArray(parsed.changes)) parsed.changes = []
 
-  return parsed
+  return {
+    suggestion: parsed,
+    usage: {
+      input_tokens: message.usage.input_tokens,
+      output_tokens: message.usage.output_tokens,
+    },
+  }
 }

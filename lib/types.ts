@@ -71,6 +71,8 @@ export interface Suggestion {
   new_code: string
   risk_level: RiskLevel
   confidence: number
+  input_tokens: number | null
+  output_tokens: number | null
   created_at: string
   approved_at: string | null
   approved_by: string | null

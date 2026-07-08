@@ -44,17 +44,20 @@ vi.mock('@/lib/db', () => ({
 // ─── Mock: Claude ─────────────────────────────────────────────────────────────
 vi.mock('@/lib/claude', () => ({
   parseRequest: vi.fn().mockResolvedValue({
-    request_summary: 'Change the headline',
-    risk_level: 'low',
-    confidence: 0.95,
-    changes: [
-      {
-        target_file: 'index.html',
-        target_section: 'hero',
-        old_code: '<h1>Old</h1>',
-        new_code: '<h1>New</h1>',
-      },
-    ],
+    suggestion: {
+      request_summary: 'Change the headline',
+      risk_level: 'low',
+      confidence: 0.95,
+      changes: [
+        {
+          target_file: 'index.html',
+          target_section: 'hero',
+          old_code: '<h1>Old</h1>',
+          new_code: '<h1>New</h1>',
+        },
+      ],
+    },
+    usage: { input_tokens: 900, output_tokens: 210 },
   }),
 }))
 

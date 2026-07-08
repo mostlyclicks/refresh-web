@@ -92,20 +92,23 @@ export async function POST(req: NextRequest) {
     const primaryFile = Object.keys(siteFiles)[0] ?? 'index.html'
     const primaryCode = siteFiles[primaryFile] ?? ''
 
-    const suggestion = process.env.MOCK_CLAUDE === 'true'
+    const { suggestion, usage } = process.env.MOCK_CLAUDE === 'true'
       ? {
-          understood: true,
-          request_summary: `Mock: ${message_text}`,
-          changes: [{
-            target_file:    primaryFile,
-            target_section: 'body',
-            old_code: primaryCode.split('\n').slice(0, 3).join('\n'),
-            new_code: `<!-- Updated: ${message_text} -->\n` + primaryCode.split('\n').slice(0, 3).join('\n'),
-          }],
-          risk_level:       'low' as const,
-          risk_description: 'Mock suggestion — no real changes',
-          confidence:       0.99,
-          notes:            'Mock response. Set MOCK_CLAUDE=false to use real Claude.',
+          suggestion: {
+            understood: true,
+            request_summary: `Mock: ${message_text}`,
+            changes: [{
+              target_file:    primaryFile,
+              target_section: 'body',
+              old_code: primaryCode.split('\n').slice(0, 3).join('\n'),
+              new_code: `<!-- Updated: ${message_text} -->\n` + primaryCode.split('\n').slice(0, 3).join('\n'),
+            }],
+            risk_level:       'low' as const,
+            risk_description: 'Mock suggestion — no real changes',
+            confidence:       0.99,
+            notes:            'Mock response. Set MOCK_CLAUDE=false to use real Claude.',
+          },
+          usage: { input_tokens: 0, output_tokens: 0 },
         }
       : await parseRequest(message_text, siteFiles, attachments)
 
@@ -121,6 +124,8 @@ export async function POST(req: NextRequest) {
         new_code:      firstChange?.new_code    ?? '',
         risk_level:    suggestion.risk_level,
         confidence:    suggestion.confidence,
+        input_tokens:  usage.input_tokens,
+        output_tokens: usage.output_tokens,
       })
       .select()
       .single()

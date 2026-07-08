@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
         const repoPath = normaliseRepo(website.github_repo_url!)
         const fileList = await listGitHubFiles(repoPath)
         const siteFiles = await fetchAllSiteFiles(repoPath, fileList)
-        const suggestion = await parseRequest(effectiveText, siteFiles, attachments)
+        const { suggestion, usage } = await parseRequest(effectiveText, siteFiles, attachments)
 
         const firstChange = suggestion.changes?.[0]
         await supabaseAdmin.from('suggestions').insert({
@@ -164,6 +164,8 @@ export async function POST(req: NextRequest) {
           new_code:        firstChange?.new_code    ?? '',
           risk_level:      suggestion.risk_level,
           confidence:      suggestion.confidence,
+          input_tokens:    usage.input_tokens,
+          output_tokens:   usage.output_tokens,
         })
       } catch (err) {
         console.error('[SMS] Background parse failed:', err)

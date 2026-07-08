@@ -17,11 +17,14 @@ vi.mock('@/lib/db', () => ({ supabaseAdmin: mockSupabase }))
 
 // ─── Mock: Claude ─────────────────────────────────────────────────────────────
 const mockParseRequest = vi.fn().mockResolvedValue({
-  understood: true,
-  request_summary: 'Change the headline',
-  risk_level: 'low',
-  confidence: 0.95,
-  changes: [{ target_file: 'index.html', target_section: 'hero', old_code: 'a', new_code: 'b' }],
+  suggestion: {
+    understood: true,
+    request_summary: 'Change the headline',
+    risk_level: 'low',
+    confidence: 0.95,
+    changes: [{ target_file: 'index.html', target_section: 'hero', old_code: 'a', new_code: 'b' }],
+  },
+  usage: { input_tokens: 1200, output_tokens: 340 },
 })
 vi.mock('@/lib/claude', () => ({
   parseRequest: (...a: unknown[]) => mockParseRequest(...a),

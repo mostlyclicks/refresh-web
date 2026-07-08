@@ -34,6 +34,7 @@ export default async function AdminOverviewPage() {
     { count: totalRequests },
     { data: recentRequests },
     { data: rawClients },
+    { data: monthTokenRows },
   ] = await Promise.all([
     supabaseAdmin.from('clients').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -52,7 +53,26 @@ export default async function AdminOverviewPage() {
       .from('clients')
       .select('id, name, tier, created_at, websites(name, deployed_url), requests(id, status, created_at)')
       .order('name'),
+    supabaseAdmin
+      .from('suggestions')
+      .select('input_tokens, output_tokens')
+      .gte('created_at', startOfMonth),
   ])
+
+  // Claude Haiku 4.5 pricing: $1.00 / MTok input, $5.00 / MTok output.
+  const HAIKU_INPUT_PER_MTOK = 1.0
+  const HAIKU_OUTPUT_PER_MTOK = 5.0
+  const tokenTotals = (monthTokenRows ?? []).reduce(
+    (acc, row: any) => {
+      acc.input += row.input_tokens ?? 0
+      acc.output += row.output_tokens ?? 0
+      return acc
+    },
+    { input: 0, output: 0 }
+  )
+  const estimatedCost =
+    (tokenTotals.input / 1_000_000) * HAIKU_INPUT_PER_MTOK +
+    (tokenTotals.output / 1_000_000) * HAIKU_OUTPUT_PER_MTOK
 
   const tierConfig: Record<ClientTier, { label: string; className: string }> = {
     basic:        { label: 'Basic',        className: 'text-slate-400 bg-white/5' },
@@ -167,6 +187,31 @@ export default async function AdminOverviewPage() {
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* AI token usage */}
+      <div
+        className="rounded-2xl px-5 py-4 mb-8 md:mb-10 flex flex-wrap items-center gap-x-8 gap-y-3"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <div>
+          <p className="text-xs text-slate-500 mb-0.5">Claude tokens this month</p>
+          <p className="text-lg font-semibold text-white">
+            {(tokenTotals.input + tokenTotals.output).toLocaleString('en-US')}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500 mb-0.5">Input / output</p>
+          <p className="text-sm text-slate-300">
+            {tokenTotals.input.toLocaleString('en-US')} / {tokenTotals.output.toLocaleString('en-US')}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500 mb-0.5">Estimated cost (Haiku 4.5)</p>
+          <p className="text-lg font-semibold text-white">
+            ${estimatedCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+          </p>
+        </div>
       </div>
 
       {/* Client cards */}
