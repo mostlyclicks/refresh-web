@@ -8,6 +8,7 @@ export interface SendEmailArgs {
   to: string
   subject: string
   html: string
+  replyTo?: string
 }
 
 export interface SendEmailResult {
@@ -16,7 +17,7 @@ export interface SendEmailResult {
   error?: string
 }
 
-export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<SendEmailResult> {
+export async function sendEmail({ to, subject, html, replyTo: replyToOverride }: SendEmailArgs): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) {
     console.warn('[email] RESEND_API_KEY not set — skipping email:', subject)
@@ -24,7 +25,7 @@ export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<S
   }
 
   const from = process.env.EMAIL_FROM || 'RefreshWeb <notifications@refreshweb.io>'
-  const replyTo = process.env.EMAIL_REPLY_TO
+  const replyTo = replyToOverride || process.env.EMAIL_REPLY_TO
 
   try {
     const res = await fetch(RESEND_ENDPOINT, {
