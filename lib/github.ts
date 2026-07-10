@@ -10,6 +10,7 @@ export function normaliseRepo(raw: string): string {
     .replace(/^https?:\/\/github\.com\//, '')
     .replace(/\.git$/, '')
     .replace(/\/$/, '')
+    .replace(/^\//, '')
 }
 
 export async function fetchGitHubFile(repoPath: string, filePath: string): Promise<string> {
